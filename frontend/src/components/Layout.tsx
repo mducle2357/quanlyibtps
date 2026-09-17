@@ -4,6 +4,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import AddBondModal from './AddBondModal';
+import AdminActions from './AdminActions';
 
 const SYSTEM_VIEWS = [
   { id: 'dashboard', name: 'Dashboard', ic: 'DB' },
@@ -87,17 +88,19 @@ export default function Layout() {
             <span className="ic">··</span>
             <span className="lbl">Xem tất cả (danh sách)</span>
           </NavLink>
-          {user?.roles.includes('Admin') && (
+          {hasRole('Admin', 'Manager') && (
             <>
               <div className="navgroup">Quản trị</div>
               <NavLink to="/audit" className={({ isActive }) => 'navitem' + (isActive ? ' active' : '')} title="Audit Log">
                 <span className="ic">AL</span>
                 <span className="lbl">Audit Log</span>
               </NavLink>
-              <NavLink to="/users" className={({ isActive }) => 'navitem' + (isActive ? ' active' : '')} title="Người dùng">
-                <span className="ic">US</span>
-                <span className="lbl">Người dùng</span>
-              </NavLink>
+              {user?.roles.includes('Admin') && (
+                <NavLink to="/users" className={({ isActive }) => 'navitem' + (isActive ? ' active' : '')} title="Người dùng">
+                  <span className="ic">US</span>
+                  <span className="lbl">Người dùng</span>
+                </NavLink>
+              )}
             </>
           )}
         </div>
@@ -129,6 +132,7 @@ export default function Layout() {
             <h1>TPS IB Operating Dashboard</h1>
           </div>
           <div className="spacer" />
+          <AdminActions />
         </div>
         <div className="content">
           <Outlet />

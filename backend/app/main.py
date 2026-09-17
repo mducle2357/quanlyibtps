@@ -7,7 +7,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy.orm.exc import StaleDataError
 
-from app.api.routes import auth, bond_fees, bonds, compliance, contracts, dashboard, ir, reference_rates, system, users, weekly
+from app.api.routes import admin, audit, auth, bond_fees, bonds, compliance, contracts, dashboard, ir, reference_rates, system, users, weekly
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.core.limiter import limiter
@@ -67,3 +67,5 @@ app.include_router(contracts.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(weekly.router, prefix="/api")
 app.include_router(compliance.router, prefix="/api")
+app.include_router(audit.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")

@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './lib/auth';
 import { ToastProvider } from './lib/toast';
+import AuditLogPage from './pages/AuditLogPage';
 import BondDetailPage from './pages/BondDetailPage';
 import BondsListPage from './pages/BondsListPage';
 import ContractsPage from './pages/ContractsPage';
@@ -11,7 +12,6 @@ import ControlPage from './pages/ControlPage';
 import DashboardPage from './pages/DashboardPage';
 import IRPage from './pages/IRPage';
 import LoginPage from './pages/LoginPage';
-import PlaceholderPage from './pages/PlaceholderPage';
 import UsersPage from './pages/UsersPage';
 import WeeklyPage from './pages/WeeklyPage';
 
@@ -42,7 +42,14 @@ export default function App() {
                 <Route path="weekly" element={<WeeklyPage />} />
                 <Route path="bonds" element={<BondsListPage />} />
                 <Route path="bonds/:bondId" element={<BondDetailPage />} />
-                <Route path="audit" element={<PlaceholderPage title="Audit Log" phase="Phase 6" />} />
+                <Route
+                  path="audit"
+                  element={
+                    <ProtectedRoute roles={['Admin', 'Manager']}>
+                      <AuditLogPage />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="users"
                   element={
