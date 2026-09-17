@@ -95,6 +95,7 @@ class BondDetail(BaseModel):
     updated_at: datetime
     interest_config: dict
     monthly_data: dict[str, dict]
+    fee_configs: list[dict]
 
 
 class BondMonthComputed(BaseModel):

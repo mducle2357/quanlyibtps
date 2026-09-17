@@ -17,6 +17,7 @@ from app.schemas.bond import (
     MonthlyVolumeUpdate,
 )
 from app.services import bond_service as svc
+from app.services import fee_service
 from app.services.audit_service import record_create, record_delete, record_field_changes
 from app.services.concurrency import check_version
 from app.services.dates import ym_diff
@@ -67,6 +68,7 @@ def _detail(bond: Bond) -> BondDetail:
         par_value=float(bond.par_value), status_key=status_key, status_label=status_label,
         is_deleted=bond.is_deleted, version=bond.version, created_at=bond.created_at, updated_at=bond.updated_at,
         interest_config=interest_config, monthly_data=monthly,
+        fee_configs=[fee_service.to_dict(f) for f in bond.fee_configs],
     )
 
 

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import AddBondModal from './AddBondModal';
 
 const SYSTEM_VIEWS = [
   { id: 'dashboard', name: 'Dashboard', ic: 'DB' },
@@ -21,7 +22,8 @@ interface BondNavItem {
 export default function Layout() {
   const [collapsed, setCollapsed] = useState(false);
   const [search, setSearch] = useState('');
-  const { user, logout } = useAuth();
+  const [showAdd, setShowAdd] = useState(false);
+  const { user, logout, hasRole } = useAuth();
   const navigate = useNavigate();
 
   const { data: bonds } = useQuery<BondNavItem[]>({
@@ -76,6 +78,15 @@ export default function Layout() {
               <span className="badge">{badgeFor(b.status_key)}</span>
             </NavLink>
           ))}
+          {hasRole('Admin', 'Manager', 'Staff') && (
+            <button className="navbtn" onClick={() => setShowAdd(true)} title="Thêm trái phiếu">
+              + <span className="hide-c">Thêm trái phiếu</span>
+            </button>
+          )}
+          <NavLink to="/bonds" end className={({ isActive }) => 'navitem' + (isActive ? ' active' : '')} title="Xem tất cả trái phiếu">
+            <span className="ic">··</span>
+            <span className="lbl">Xem tất cả (danh sách)</span>
+          </NavLink>
           {user?.roles.includes('Admin') && (
             <>
               <div className="navgroup">Quản trị</div>
@@ -123,6 +134,7 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
+      {showAdd && <AddBondModal onClose={() => setShowAdd(false)} />}
     </div>
   );
 }

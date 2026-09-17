@@ -16,7 +16,7 @@ build rather than a cut-down one. Current state:
 |---|---|---|
 | 1 | Repo scaffold, DB schema (all entities), auth + RBAC, audit-log infra, optimistic locking, shell UI + navigation | **Done** |
 | 2 | Control tab (reference rates) + coupon engine + bond CRUD + monthly volume grid | **Done** |
-| 3 | Fee engine (6 fee types, time-varying rate schedules) + revenue | Not started |
+| 3 | Fee engine (6 fee types, time-varying rate schedules) + revenue | **Done** |
 | 4 | Dashboard aggregation + IR tab + Contracts register | Not started |
 | 5 | Weekly Portfolio + Compliance checklist + alerts | Not started |
 | 6 | Audit log viewer, backup/export/import, duplicate detection, perf, full test suite, Docker polish | Not started |
@@ -115,6 +115,19 @@ depth — see `app/services/concurrency.py` and the `StaleDataError` handler in
    the resolution/circular-dependency logic in TypeScript — a second
    implementation of that logic is exactly the kind of duplication that goes
    stale and quietly diverges from the engine used for real calculations.
+8. **Fee-rate resolution rule for a mid-month rate change** (prompt §13.1
+   explicitly asks for one of two rules to be chosen, not left
+   unconfigured): the engine takes "ưu tiên rate tại ngày chốt kỳ" — the
+   latest `BondFeeRatePeriod.effective_from` that has started by the
+   recognition month's end wins (`fee_rate_at` in `calc_engine.py`). This
+   applies uniformly to both Actual (which also prorates by day within that
+   rate) and Flat methods. `BondFeeRatePeriod` overlap validation treats
+   `effective_to = null` as open-ended and rejects any two periods on the
+   same fee whose `[effective_from, effective_to]` windows intersect.
+9. **`BondFeeConfig` got `created_at`/`updated_at`** added in a follow-up
+   migration (`b480be34d7e3`) — missed in the initial schema pass, caught
+   while wiring the fee API, consistent with §1.3's "mọi record quan trọng
+   nên có created_at, updated_at".
 
 ## Local development
 

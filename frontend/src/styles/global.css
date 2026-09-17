@@ -163,6 +163,8 @@ tr.sub td{background:#e9eef4;font-weight:600}
 tr.total td{background:#dbe5f0;font-weight:700;border-top:1px solid #9db4cd;border-bottom:1px solid #9db4cd}
 tr.grand td{background:var(--navy-soft);color:#fff;font-weight:700}
 td.missing{background:var(--warn-bg);color:var(--warn)}
+.lvl2{padding-left:14px !important}
+.lvl3{padding-left:26px !important;font-style:italic;color:var(--ink-2)}
 
 /* inputs inside grid */
 input.cell{width:100%;min-width:52px;border:1px solid transparent;background:transparent;padding:0 2px;text-align:right;border-radius:2px;outline:none;font-variant-numeric:tabular-nums}

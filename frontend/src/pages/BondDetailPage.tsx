@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import BondFeesPanel from '../components/BondFeesPanel';
 import { api, apiErrorMessage, isConflictError } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { fmtNumber, fmtPercent } from '../lib/format';
@@ -38,6 +39,20 @@ interface BondDetail {
   version: number;
   interest_config: InterestConfig;
   monthly_data: Record<string, MonthlyDataRow>;
+  fee_configs: FeeConfigLite[];
+}
+interface FeeConfigLite {
+  fee_type_key: string;
+  name: string;
+  basis: string;
+  allowed_methods: string[];
+  default_rate: number;
+  method: string;
+  recognition_month: string | null;
+  freq_months: number;
+  timing: string;
+  version: number;
+  periods: { id: string; effective_from: string; effective_to: string | null; fee_rate: number }[];
 }
 interface ComputedMonth {
   month_key: string;
@@ -45,6 +60,7 @@ interface ComputedMonth {
   holding: number | null;
   coupon: number | null;
   reference_value: number | null;
+  fees: Record<string, number>;
   fee_total: number;
   coupon_revenue: number;
   total_revenue: number;
@@ -109,6 +125,7 @@ export default function BondDetailPage() {
 
       <BasicInfoPanel bond={bond} canEdit={canEdit} onSaved={refetchBond} />
       <InterestConfigPanel bond={bond} refRates={refRates ?? []} canEdit={canEdit} onSaved={refetchBond} />
+      <BondFeesPanel bondId={bond.id} feeConfigs={bond.fee_configs} canEdit={canEdit} />
 
       <div className="panel">
         <header>
@@ -138,7 +155,10 @@ export default function BondDetailPage() {
                 <CalcRow label="Khối lượng nắm giữ" idx="6" months={months} data={computedByMonth} pick={(c) => c.holding} />
                 <CalcRow label="Lãi suất Coupon (%)" idx="7" months={months} data={computedByMonth} pick={(c) => c.coupon} pct />
                 <CalcRow label="LS tham chiếu (%)" idx="8" months={months} data={computedByMonth} pick={(c) => c.reference_value} pct missing />
-                <CalcRow label="Doanh thu Phí" idx="9" months={months} data={computedByMonth} pick={(c) => c.fee_total} />
+                {bond.fee_configs.map((f) => (
+                  <CalcRow key={f.fee_type_key} label={f.name} idx="·" months={months} data={computedByMonth} pick={(c) => c.fees[f.fee_type_key]} sub />
+                ))}
+                <CalcRow label="Doanh thu Phí (1)" idx="9" months={months} data={computedByMonth} pick={(c) => c.fee_total} sum />
                 <CalcRow label="Doanh thu Coupon" idx="10" months={months} data={computedByMonth} pick={(c) => c.coupon_revenue} />
                 <CalcRow label="Tổng doanh thu (3)" idx="11" months={months} data={computedByMonth} pick={(c) => c.total_revenue} total />
               </tbody>
@@ -420,6 +440,8 @@ function CalcRow({
   pct,
   missing,
   total,
+  sub,
+  sum,
 }: {
   label: string;
   idx: string;
@@ -429,11 +451,13 @@ function CalcRow({
   pct?: boolean;
   missing?: boolean;
   total?: boolean;
+  sub?: boolean;
+  sum?: boolean;
 }) {
   return (
-    <tr className={total ? 'total' : undefined}>
+    <tr className={total ? 'total' : sum ? 'sub' : undefined}>
       <td className="s1">{idx}</td>
-      <td className="s2 lvl2">{label}</td>
+      <td className={`s2 ${sub ? 'lvl3' : 'lvl2'}`}>{label}</td>
       {months.map((m) => {
         const c = data[m];
         const v = c ? pick(c) : undefined;
