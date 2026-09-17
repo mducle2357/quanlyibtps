@@ -1,0 +1,2769 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IB Operating Dashboard — TPS</title>
+<style>
+/* =========================================================================
+   IB DEPARTMENT OPERATING DASHBOARD — TPS
+   Institutional / financial-terminal styling. Light canvas, navy structure.
+   ========================================================================= */
+:root{
+  --navy:#0d2340;         /* primary structure */
+  --navy-2:#173a5e;
+  --navy-soft:#1c3a5e;
+  --ink:#16202c;
+  --ink-2:#4a5866;
+  --line:#d5dbe3;
+  --line-soft:#e6eaf0;
+  --canvas:#f4f6f9;
+  --panel:#ffffff;
+  --calc-bg:#f0f3f7;      /* formula cells */
+  --pos:#0a7d46;
+  --neg:#c02b2b;
+  --warn:#c47b00;
+  --warn-bg:#fff5e0;
+  --danger-bg:#fdecec;
+  --ok-bg:#eaf6ef;
+  --accent:#1b4f8a;
+  --cur-col:#eef4fb;
+  --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;font-family:'Inter','Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  font-size:13px;color:var(--ink);background:var(--canvas);
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--accent)}
+
+/* ---------- Layout ---------- */
+#app{display:flex;min-height:100vh}
+#sidebar{
+  width:236px;flex:0 0 236px;background:var(--navy);color:#c9d6e5;
+  position:sticky;top:0;height:100vh;display:flex;flex-direction:column;
+  transition:width .15s ease,flex-basis .15s ease;
+}
+#sidebar.collapsed{width:56px;flex-basis:56px}
+#sidebar .brand{
+  padding:14px 14px 12px;border-bottom:1px solid rgba(255,255,255,.12);
+  display:flex;align-items:center;gap:10px;
+}
+#sidebar .brand .mark{
+  width:28px;height:28px;flex:0 0 28px;border:1px solid #4d7bb0;color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;letter-spacing:.5px;
+}
+#sidebar .brand .txt{line-height:1.2;overflow:hidden;white-space:nowrap}
+#sidebar .brand .txt b{color:#fff;display:block;font-size:13px}
+#sidebar .brand .txt span{font-size:10.5px;color:#8fa8c4}
+#sidebar.collapsed .brand .txt,#sidebar.collapsed .hide-c{display:none}
+.navsearch{padding:8px 10px}
+.navsearch input{
+  width:100%;background:#0a1c33;border:1px solid #2c4a70;color:#e6eef7;
+  padding:5px 8px;border-radius:2px;outline:none;
+}
+.navsearch input::placeholder{color:#6d86a3}
+.navlist{flex:1;overflow-y:auto;padding:4px 0 12px}
+.navlist::-webkit-scrollbar{width:8px}
+.navlist::-webkit-scrollbar-thumb{background:#2a4a72}
+.navgroup{
+  font-size:10px;letter-spacing:.7px;color:#7d97b5;padding:12px 14px 5px;
+}
+.navitem{
+  display:flex;align-items:center;gap:9px;padding:6px 14px;cursor:pointer;
+  border-left:3px solid transparent;white-space:nowrap;overflow:hidden;
+}
+.navitem:hover{background:#132f52;color:#fff}
+.navitem.active{background:#17395f;color:#fff;border-left-color:#5b9bd5;font-weight:600}
+.navitem .ic{
+  width:20px;flex:0 0 20px;text-align:center;font-size:10px;font-weight:700;
+  color:#8fb4de;font-family:var(--mono);
+}
+.navitem.active .ic{color:#a9cdf3}
+.navitem .lbl{overflow:hidden;text-overflow:ellipsis}
+.navitem .badge{margin-left:auto;font-size:9.5px;padding:1px 5px;border-radius:8px;background:#26456b;color:#bcd4ee}
+#sidebar.collapsed .navitem{padding:6px 0;justify-content:center}
+#sidebar.collapsed .navitem .lbl,#sidebar.collapsed .navitem .badge,#sidebar.collapsed .navgroup{display:none}
+#sidebar.collapsed .navsearch{display:none}
+.navbtn{
+  margin:6px 10px 0;padding:6px 8px;border:1px dashed #3c618c;background:transparent;color:#a9c6e6;
+  width:calc(100% - 20px);text-align:left;border-radius:2px;
+}
+.navbtn:hover{background:#122f52;color:#fff;border-color:#6b9bd0}
+#sidebar.collapsed .navbtn{width:36px;margin:6px 10px;text-align:center;padding:6px 0}
+.navfoot{border-top:1px solid rgba(255,255,255,.12);padding:8px 12px;font-size:10.5px;color:#8fa8c4}
+.navfoot .sv{display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;background:#3ea76a;flex:0 0 7px}
+.dot.saving{background:#d9a441}
+
+/* ---------- Main ---------- */
+#main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{
+  background:var(--panel);border-bottom:1px solid var(--line);
+  padding:9px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:60;
+}
+.topbar h1{font-size:15px;margin:0;font-weight:650;letter-spacing:-.1px}
+.topbar .sub{font-size:11px;color:var(--ink-2)}
+.topbar .spacer{flex:1}
+.content{padding:14px 16px 60px;min-width:0}
+
+/* ---------- Buttons ---------- */
+.btn{
+  border:1px solid var(--line);background:#fff;padding:5px 10px;border-radius:2px;
+  color:var(--ink);white-space:nowrap;
+}
+.btn:hover{background:#eef2f7;border-color:#b9c4d2}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.primary:hover{background:#17395f}
+.btn.danger{color:var(--neg);border-color:#e6b6b6}
+.btn.danger:hover{background:var(--danger-bg)}
+.btn.sm{padding:2px 7px;font-size:11.5px}
+.btn.icon{padding:3px 7px;font-family:var(--mono)}
+
+/* ---------- Panels ---------- */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:3px;margin-bottom:14px}
+.panel > header{
+  display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line-soft);
+  background:#fbfcfd;cursor:pointer;user-select:none;
+}
+.panel > header h2{margin:0;font-size:12.5px;font-weight:650;letter-spacing:.1px}
+.panel > header .caret{font-family:var(--mono);color:var(--ink-2);width:12px}
+.panel > header .spacer{flex:1}
+.panel > header .hint{font-size:11px;color:var(--ink-2);font-weight:400}
+.panel .body{padding:12px}
+.panel.collapsed .body{display:none}
+.panel .body.flush{padding:0}
+
+/* ---------- KPI cards ---------- */
+.kpigrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--navy);padding:10px 12px;border-radius:3px}
+.kpi .k{font-size:10.5px;color:var(--ink-2);margin-bottom:3px}
+.kpi .v{font-size:19px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.kpi .m{font-size:10.5px;color:var(--ink-2);margin-top:2px}
+.kpi.good{border-left-color:var(--pos)}
+.kpi.warn{border-left-color:var(--warn)}
+.kpi.bad{border-left-color:var(--neg)}
+.kpi.bad .v{color:var(--neg)}
+.kpi.good .v{color:var(--pos)}
+.kpi.warn .v{color:var(--warn)}
+
+/* ---------- Tables ---------- */
+.tblwrap{overflow:auto;max-height:74vh;border-top:1px solid var(--line-soft)}
+/* Bảng phủ hết bề ngang, nhưng phần dư KHÔNG chia đều cho các cột dữ liệu:
+   một cột đệm (.fill) ở cuối hút toàn bộ khoảng trống, nên cột số luôn co sát nội dung. */
+table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;width:100%}
+table.grid th.fill,table.grid td.fill{width:100%;min-width:0;background:transparent;border-right:none}
+tr.section{background:var(--navy)}
+tr.sub{background:#e9eef4}
+tr.total{background:#dbe5f0}
+tr.grand{background:var(--navy-soft)}
+table.grid th,table.grid td{border-right:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);padding:2px 6px;text-align:right;white-space:nowrap;height:23px}
+/* ô dữ liệu tự nới theo độ dài số, chỉ chặn dưới để cột trống không quá mảnh */
+table.grid td:not(.s1):not(.s2):not(.fill),table.grid thead th:not(.s1):not(.s2):not(.fill){min-width:54px;width:1px}
+table.grid thead th{
+  background:#eef1f5;position:sticky;z-index:20;font-weight:600;font-size:11px;color:#2b3b4d;text-align:center;
+  border-bottom:1px solid var(--line);
+}
+table.grid thead tr.r1 th{top:0}
+table.grid thead tr.r2 th{top:23px}
+table.grid thead tr.r3 th{top:46px}
+table.grid th.s1,table.grid td.s1{position:sticky;left:0;z-index:15;background:#fff;text-align:left;width:34px;min-width:34px;max-width:34px;color:var(--ink-2);font-size:10.5px;padding:2px 4px}
+/* cột nhãn bám sát nội dung, không cắt chữ */
+table.grid th.s2,table.grid td.s2{position:sticky;left:34px;z-index:15;background:#fff;text-align:left;min-width:180px;font-size:12px;border-right:1px solid var(--line)}
+table.grid thead th.s1,table.grid thead th.s2{z-index:40;background:#eef1f5}
+table.grid tbody tr:hover td{background:#f7fafd}
+table.grid tbody tr:hover td.fill{background:transparent}
+table.grid tbody tr.section:hover td{background:var(--navy)}
+table.grid tbody tr.grand:hover td{background:var(--navy-soft)}
+table.grid tbody tr:hover td.s1,table.grid tbody tr:hover td.s2{background:#f2f6fb}
+td.calc{background:var(--calc-bg);color:#1e2a38}
+td.num{font-variant-numeric:tabular-nums}
+td.neg,.neg{color:var(--neg)}
+td.zero{color:#9aa6b3}
+tr.section td{background:var(--navy);color:#fff;font-weight:650;text-align:left;letter-spacing:.2px;border-bottom:1px solid var(--navy)}
+tr.section td.s1,tr.section td.s2{background:var(--navy);color:#fff}
+tr.sub td{background:#e9eef4;font-weight:600}
+tr.sub td.s1,tr.sub td.s2{background:#e9eef4}
+tr.total td{background:#dbe5f0;font-weight:700;border-top:1px solid #9db4cd;border-bottom:1px solid #9db4cd}
+tr.total td.s1,tr.total td.s2{background:#dbe5f0}
+tr.grand td{background:var(--navy-soft);color:#fff;font-weight:700}
+tr.grand td.s1,tr.grand td.s2{background:var(--navy-soft);color:#fff}
+td.cur,th.cur{background:var(--cur-col)}
+tr:hover td.cur{background:#e2eefc}
+td.inactive{background:repeating-linear-gradient(45deg,#f6f7f9,#f6f7f9 4px,#eceef2 4px,#eceef2 8px);color:#b6bec8}
+td.missing{background:var(--warn-bg);color:var(--warn)}
+/* tháng cuối kỳ thu phí: nổi bật nhẹ; tháng giữa kỳ: nhạt đi để không nhầm là mất số */
+td.feeend{box-shadow:inset 0 -2px 0 #b9cade}
+td.feemid{color:#aeb7c1}
+.lvl1{padding-left:0}
+.lvl2{padding-left:14px !important}
+.lvl3{padding-left:26px !important;font-style:italic;color:var(--ink-2)}
+
+/* inputs inside grid */
+input.cell{
+  width:100%;min-width:52px;border:1px solid transparent;background:transparent;padding:0 2px;text-align:right;
+  border-radius:2px;outline:none;font-variant-numeric:tabular-nums;
+}
+input.cell:hover{border-color:var(--line)}
+input.cell:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 2px rgba(27,79,138,.12)}
+input.cell.txt{text-align:left}
+select.cell{border:1px solid var(--line);background:#fff;padding:1px 3px;border-radius:2px;max-width:180px}
+input[type=date].cell{text-align:left;border-color:var(--line-soft)}
+
+/* ---------- Info blocks ---------- */
+.infogrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 18px}
+.field{display:flex;align-items:center;gap:8px}
+.field label{flex:0 0 150px;font-size:11.5px;color:var(--ink-2)}
+.field input,.field select{
+  flex:1;min-width:0;border:1px solid var(--line);border-radius:2px;padding:4px 6px;background:#fff;
+}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(27,79,138,.12)}
+.field input.numf{text-align:right;font-variant-numeric:tabular-nums}
+
+/* ---------- Misc ---------- */
+.tag{display:inline-block;padding:1px 7px;border-radius:2px;font-size:10.5px;font-weight:600;border:1px solid}
+.tag.draft{background:#f1f3f6;border-color:#cfd6df;color:#54606e}
+.tag.ongoing{background:#e7f0fb;border-color:#b3cbe8;color:#1b4f8a}
+.tag.done{background:var(--ok-bg);border-color:#a9d6bd;color:var(--pos)}
+.tag.denied{background:var(--danger-bg);border-color:#e6b6b6;color:var(--neg)}
+.tag.pre{background:#f4efff;border-color:#cfc0ea;color:#5b3f9e}
+.tag.active{background:var(--ok-bg);border-color:#a9d6bd;color:var(--pos)}
+.tag.matured{background:#f1f3f6;border-color:#cfd6df;color:#54606e}
+.reminder{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);
+  border-left:3px solid var(--accent);background:var(--panel);border-radius:3px;margin-bottom:14px;
+}
+.reminder.due{border-left-color:var(--warn);background:var(--warn-bg)}
+.reminder .big{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.alerts{display:flex;flex-direction:column;gap:6px}
+.alert{display:flex;gap:9px;align-items:flex-start;padding:7px 10px;border:1px solid var(--line-soft);border-left:3px solid var(--ink-2);background:#fbfcfd;border-radius:2px}
+.alert.w{border-left-color:var(--warn);background:var(--warn-bg)}
+.alert.d{border-left-color:var(--neg);background:var(--danger-bg)}
+.alert.i{border-left-color:var(--accent);background:#f2f7fd}
+.alert .t{font-weight:600}
+.alert .s{color:var(--ink-2);font-size:11.5px}
+.empty{padding:26px;text-align:center;color:var(--ink-2);border:1px dashed var(--line);border-radius:3px;background:#fbfcfd}
+.toolbar{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.toolbar .spacer{flex:1}
+.legend{display:flex;flex-wrap:wrap;gap:12px;padding:8px 4px 0}
+.legend label{display:flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer}
+.legend .sw{width:14px;height:3px;border-radius:2px}
+.hint{font-size:11px;color:var(--ink-2)}
+.backlink{background:none;border:none;color:var(--accent);padding:0;font-weight:600;font-size:11.5px}
+.backlink:hover{text-decoration:underline}
+.bondhead{display:flex;align-items:baseline;gap:12px;margin:2px 0 12px}
+.bondhead h1{margin:0;font-size:23px;letter-spacing:-.4px;font-weight:700}
+.chartbox{width:100%;overflow-x:auto}
+svg.chart{display:block}
+svg.chart text{font-family:inherit;font-size:10px;fill:#5a6775}
+svg.chart .axis{stroke:#c9d2dc;stroke-width:1}
+svg.chart .gl{stroke:#e9edf2;stroke-width:1}
+
+/* ---------- Modal / toast ---------- */
+.mask{position:fixed;inset:0;background:rgba(13,35,64,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
+.modal{background:#fff;border-radius:4px;width:min(560px,100%);max-height:86vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(13,35,64,.28)}
+.modal.wide{width:min(820px,100%)}
+.modal header{padding:12px 16px;border-bottom:1px solid var(--line);font-weight:650}
+.modal .mbody{padding:14px 16px;overflow:auto}
+.modal footer{padding:10px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;background:#fbfcfd}
+.modal .field{margin-bottom:10px}
+.modal .field label{flex:0 0 170px}
+#toastRoot{position:fixed;right:16px;bottom:16px;z-index:300;display:flex;flex-direction:column;gap:8px}
+.toast{
+  background:var(--navy);color:#fff;padding:9px 14px;border-radius:3px;font-size:12.5px;
+  box-shadow:0 6px 20px rgba(13,35,64,.3);max-width:340px;animation:tin .18s ease
+}
+.toast.err{background:var(--neg)}
+.toast.ok{background:#0a5f38}
+@keyframes tin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.chk{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
+.cklist{display:flex;flex-direction:column;gap:6px}
+.ckrow{display:flex;align-items:center;gap:8px;padding:5px 7px;border:1px solid var(--line-soft);border-radius:2px}
+.ckrow input[type=text]{flex:1;border:1px solid transparent;padding:3px 5px;background:transparent;border-radius:2px}
+.ckrow input[type=text]:focus{outline:none;border-color:var(--accent);background:#fff}
+.ckrow.done{background:var(--ok-bg);border-color:#c3e3d1}
+.compcell{cursor:pointer;font-variant-numeric:tabular-nums}
+.compcell:hover{background:#e2eefc !important}
+.compcell.full{color:var(--pos);font-weight:600}
+.compcell.part{color:var(--warn);font-weight:600}
+@media print{#sidebar{display:none}}
+@media (max-width:1100px){ .dashsplit{grid-template-columns:1fr !important} }
+@media (max-width:820px){
+  #sidebar{position:fixed;z-index:120;box-shadow:2px 0 12px rgba(0,0,0,.2)}
+  #sidebar:not(.collapsed){width:236px}
+  #main{margin-left:56px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="mark">IB</div>
+      <div class="txt"><b>TPS · Investment Banking</b><span>Operating Dashboard</span></div>
+    </div>
+    <div class="navsearch"><input id="bondSearch" placeholder="Tìm trái phiếu…" autocomplete="off"></div>
+    <div class="navlist" id="navlist"></div>
+    <div class="navfoot">
+      <div class="sv"><span class="dot" id="saveDot"></span><span id="saveTxt">Đã lưu</span></div>
+    </div>
+  </aside>
+  <main id="main">
+    <div class="topbar">
+      <button class="btn icon" id="btnCollapseNav" title="Thu gọn thanh điều hướng">☰</button>
+      <div>
+        <h1 id="viewTitle">Dashboard</h1>
+        <div class="sub" id="viewSub"></div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn" data-act="exportJson">Xuất JSON</button>
+      <button class="btn" data-act="importJson">Nhập JSON</button>
+      <button class="btn" data-act="backup">Sao lưu</button>
+      <button class="btn danger" data-act="resetData">Xóa dữ liệu</button>
+    </div>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+<input type="file" id="fileInput" accept="application/json" style="display:none">
+
+<script>
+"use strict";
+/* =========================================================================
+   0. HẰNG SỐ & TIỆN ÍCH
+   ========================================================================= */
+const STORAGE_KEY = 'ib_tps_ops_data';          // KHÓA CỐ ĐỊNH – không đổi giữa các phiên bản
+const LEGACY_KEYS = ['ib_tps_data_v1','ib_tps_dashboard_data'];
+const DEFAULT_START = '2025-10';                 // timeline tháng bắt đầu
+const WEEKLY_START  = '2025-11';                 // timeline tuần bắt đầu
+
+const SYSTEM_VIEWS = [
+  {id:'dashboard', name:'Dashboard',        ic:'DB'},
+  {id:'control',   name:'Control',          ic:'CT'},
+  {id:'contracts', name:'Sổ Hợp đồng',      ic:'HĐ'},
+  {id:'ir',        name:'Dịch vụ IR',       ic:'IR'},
+  {id:'weekly',    name:'Theo dõi DM tuần', ic:'DM'}
+];
+
+/* 6 loại phí — base: cơ sở tính, methods: cách tính hợp lệ */
+const FEE_DEFS = [
+  {key:'advisory',  name:'Phí tư vấn phát hành',    base:'advised',    methods:['once'],           basis:'Tính trên 1.1 Khối lượng tư vấn'},
+  {key:'issuing',   name:'Phí đại lý phát hành',    base:'advised',    methods:['once'],           basis:'Tính trên 1.1 Khối lượng tư vấn'},
+  {key:'custody',   name:'Phí đại lý lưu ký',       base:'outstanding',methods:['actual','flat'],  basis:'Tính trên Khối lượng lưu hành'},
+  {key:'nshtp',     name:'Phí đại diện NSHTP',      base:'outstanding',methods:['actual','flat'],  basis:'Tính trên Khối lượng lưu hành'},
+  {key:'collateral',name:'Phí quản lý TSBĐ',        base:'outstanding',methods:['actual','flat'],  basis:'Tính trên Khối lượng lưu hành'},
+  {key:'other',     name:'Phí khác (thu xếp vốn)',  base:'invested',   methods:['once'],           basis:'Tính trên 1.2 Khối lượng đầu tư'}
+];
+const FEE_METHOD_LABEL = {once:'Thu một lần', actual:'Định kỳ Actual', flat:'Định kỳ không Actual'};
+
+/* Đầu việc sau đầu tư */
+const COMP_GROUPS = [
+  {key:'cbtt', name:'CBTT định kỳ', items:[
+    {key:'bctc_nam',  name:'BCTC năm'},
+    {key:'bctc_bn',   name:'BCTC bán niên'},
+    {key:'sd_von',    name:'BC tình hình sử dụng vốn'},
+    {key:'goc_lai',   name:'BC tình hình thanh toán gốc lãi'},
+    {key:'cam_ket',   name:'BC thực hiện cam kết với nhà đầu tư'}
+  ]},
+  {key:'ktdk', name:'Kiểm tra định kỳ', items:[
+    {key:'bbkt',      name:'BBKT sau đầu tư'},
+    {key:'ubck',      name:'BC gửi UBCK (TV, DLPH, Đại diện)'},
+    {key:'dinh_gia',  name:'Định giá TSBĐ'},
+    {key:'cap_nhat_ls',name:'Cập nhật LS'}
+  ]}
+];
+const CONTRACT_STATUS = ['Dự thảo','Ongoing','Done','Denied'];
+const STATUS_CLASS = {'Dự thảo':'draft','Ongoing':'ongoing','Done':'done','Denied':'denied'};
+const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX',
+               'XXI','XXII','XXIII','XXIV','XXV','XXVI','XXVII','XXVIII','XXIX','XXX'];
+const MONTH_SHORT = ['Th1','Th2','Th3','Th4','Th5','Th6','Th7','Th8','Th9','Th10','Th11','Th12'];
+const SERIES_COLORS = ['#1b4f8a','#c47b00','#0a7d46','#8e44ad','#c02b2b','#0a8ea0','#5d6d7e','#b8860b','#2e86c1','#7d3c98'];
+
+/* ---- format số kiểu Việt Nam ---- */
+function fmt(v, dec){
+  dec = (dec===undefined)?0:dec;
+  if(v===null||v===undefined||v==='' ) return '–';
+  const n = Number(v);
+  if(!isFinite(n)) return '–';
+  if(n===0) return '-';
+  return n.toLocaleString('vi-VN',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+function fmtRaw(v,dec){ // không đổi 0 thành '-'
+  if(v===null||v===undefined||v==='') return '';
+  const n=Number(v); if(!isFinite(n)) return '';
+  const d=(dec===undefined)?0:dec;
+  return n.toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d});
+}
+/* Định dạng cho ô nhập liệu: giữ tối đa 6 chữ số thập phân, không ép số lẻ */
+function fmtInput(v){
+  if(v===null||v===undefined||v==='') return '';
+  const n=Number(v); if(!isFinite(n)) return '';
+  return n.toLocaleString('vi-VN',{minimumFractionDigits:0,maximumFractionDigits:6});
+}
+function fmtPct(v,dec){
+  if(v===null||v===undefined||!isFinite(Number(v))) return '–';
+  const d=(dec===undefined)?2:dec;
+  return Number(v).toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d})+'%';
+}
+/* parse chuỗi số kiểu VN hoặc EN về Number */
+function parseNum(s){
+  if(s===null||s===undefined) return null;
+  if(typeof s==='number') return isFinite(s)?s:null;
+  let t = String(s).trim().replace(/\s/g,'').replace(/%/g,'');
+  if(t==='' || t==='-' || t==='–') return null;
+  const neg = /^\(.*\)$/.test(t); if(neg) t=t.slice(1,-1);
+  const hasComma=t.indexOf(',')>=0, hasDot=t.indexOf('.')>=0;
+  if(hasComma && hasDot){ t = t.replace(/\./g,'').replace(',','.'); }
+  else if(hasComma){ t = t.replace(',','.'); }
+  else if(hasDot){
+    const parts=t.split('.');
+    // "1.234" hoặc "1.234.567" -> dấu phân cách nghìn; ngược lại là thập phân
+    const allThousand = parts.slice(1).every(p=>p.length===3);
+    if(parts.length>2 || (allThousand && parts[0].length<=3 && parts[1].length===3)) t=parts.join('');
+  }
+  t = t.replace(/[^0-9.\-]/g,'');
+  const n = parseFloat(t);
+  if(!isFinite(n)) return null;
+  return neg? -n : n;
+}
+const num = v => { const n=Number(v); return isFinite(n)?n:0; };
+
+/* ---- ngày tháng ---- */
+function pad2(n){ return String(n).padStart(2,'0'); }
+function ymOf(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1); }
+function ymParse(k){ const p=k.split('-'); return {y:+p[0], m:+p[1]}; }
+function ymAdd(k,n){ const {y,m}=ymParse(k); const t=y*12+(m-1)+n; return Math.floor(t/12)+'-'+pad2(t%12+1); }
+function ymDiff(a,b){ const A=ymParse(a),B=ymParse(b); return (B.y*12+B.m)-(A.y*12+A.m); }
+function daysInMonth(y,m){ return new Date(y,m,0).getDate(); }
+function monthFirst(k){ const {y,m}=ymParse(k); return new Date(y,m-1,1); }
+function monthLast(k){ const {y,m}=ymParse(k); return new Date(y,m-1,daysInMonth(y,m)); }
+function toISO(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+function parseISO(s){ if(!s) return null; const p=String(s).split('-'); if(p.length!==3) return null;
+  const d=new Date(+p[0],+p[1]-1,+p[2]); return isNaN(d.getTime())?null:d; }
+function fmtDate(s){ const d=parseISO(s); if(!d) return '–'; return pad2(d.getDate())+'/'+pad2(d.getMonth()+1)+'/'+d.getFullYear(); }
+function dayDiff(a,b){ return Math.round((b-a)/86400000); }
+function todayISO(){ return toISO(new Date()); }
+function curYM(){ return ymOf(new Date()); }
+function uid(p){ return (p||'id')+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7); }
+function esc(s){ return String(s===undefined||s===null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function $(s,r){ return (r||document).querySelector(s); }
+function $$(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+function setTxt(id,txt,cls){
+  const e=document.getElementById(id); if(!e) return;
+  e.textContent=txt;
+  if(cls!==undefined){ e.className = cls; }
+}
+/* =========================================================================
+   1. STATE TRUNG TÂM & PERSISTENCE
+   ========================================================================= */
+let S = null;          // toàn bộ dữ liệu ứng dụng
+let UI = null;         // trạng thái giao diện (được lưu kèm)
+
+function blankData(){
+  return {
+    schema: 1,
+    settings: { navCollapsed:false, lastSaved:null },
+    timeline: { start: DEFAULT_START, end: ymAdd(DEFAULT_START, 17) },
+    weekly:   { start: WEEKLY_START,  end: ymAdd(WEEKLY_START, 14), volumes:{} },
+    ui: { view:'dashboard', bondId:null, collapsedYears:[], collapsedWeeklyYears:[],
+          collapsedPanels:{}, hiddenSeries:{}, chartFrom:null, chartTo:null },
+    refRates: [],
+    bonds: [],
+    contracts: [],
+    irJobs: [],
+    equity: {}          // { 'YYYY-MM': số triệu đồng }
+  };
+}
+
+/* ---- Bond factory: ID nội bộ độc lập với mã trái phiếu (cho phép rename) ---- */
+function newBond(code){
+  return {
+    id: uid('bond'),
+    code: code,
+    info: { issueDate:'', maturityDate:'', firstFeeDate:'', payFreq:3, xhtn:'', parValue:100 },
+    rate: { type:'fixed', fixed:null, spread:null, refId:null, first4:null, floor:null, cap:null },
+    months: {},          // { ym: {advised,buyback,invested,sold,startDate,endDate} }
+    fees: FEE_DEFS.map(f=>({ key:f.key, rate:0, method:f.methods[0], recogMonth:'', freq:1, timing:'end', schedule:[] })),
+    compliance: {}       // { itemKey: { ym: [ {id,text,done} ] } }
+  };
+}
+
+/* ---- Load / Save ---- */
+function loadData(){
+  let raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw){ // migrate từ khóa cũ nếu có
+    for(const k of LEGACY_KEYS){
+      const v = localStorage.getItem(k);
+      if(v){ raw=v; break; }
+    }
+  }
+  if(raw){
+    try{
+      const d = JSON.parse(raw);
+      S = Object.assign(blankData(), d);
+      S.settings = Object.assign(blankData().settings, d.settings||{});
+      S.ui = Object.assign(blankData().ui, d.ui||{});
+      S.weekly = Object.assign(blankData().weekly, d.weekly||{});
+      S.timeline = Object.assign(blankData().timeline, d.timeline||{});
+      normalize();
+      UI = S.ui;
+      const dup=dedupeCompliance();
+      if(dup>0) setTimeout(()=>toast('Đã gộp '+dup+' đầu việc bị nhân bản do lỗi phiên bản trước'),600);
+      return;
+    }catch(e){ console.error('Không đọc được dữ liệu đã lưu', e); }
+  }
+  S = seedData();
+  UI = S.ui;
+  saveData(true);
+}
+
+/* Chuẩn hóa: bổ sung field còn thiếu sau khi nâng cấp code (không làm mất dữ liệu) */
+function normalize(){
+  S.bonds = S.bonds||[];
+  S.bonds.forEach(b=>{
+    if(!b.id) b.id = uid('bond');
+    b.info = Object.assign({issueDate:'',maturityDate:'',firstFeeDate:'',payFreq:3,xhtn:'',parValue:100}, b.info||{});
+    b.rate = Object.assign({type:'fixed',fixed:null,spread:null,refId:null,first4:null,floor:null,cap:null}, b.rate||{});
+    b.months = b.months||{};
+    b.compliance = b.compliance||{};
+    const have = {}; (b.fees||[]).forEach(f=>have[f.key]=f);
+    b.fees = FEE_DEFS.map(d=>{
+      const f = have[d.key] || {key:d.key, rate:0, method:d.methods[0], recogMonth:'', freq:1, timing:'end', schedule:[]};
+      if(d.methods.indexOf(f.method)<0) f.method = d.methods[0];
+      f.freq = Math.max(1, Math.round(num(f.freq)||1));
+      f.timing = (f.timing==='begin')?'begin':'end';
+      f.schedule = (f.schedule||[]).filter(x=>x && x.from).sort((a,b)=>ymDiff(b.from,a.from));
+      return f;
+    });
+  });
+  S.refRates = S.refRates||[];
+  S.refRates.forEach(r=>{ r.values = r.values||{}; r.components = r.components||[]; });
+  S.contracts = S.contracts||[];
+  S.irJobs = S.irJobs||[];
+  S.equity = S.equity||{};
+  S.weekly.volumes = S.weekly.volumes||{};
+  S.ui.collapsedYears = S.ui.collapsedYears||[];
+  S.ui.collapsedWeeklyYears = S.ui.collapsedWeeklyYears||[];
+  S.ui.collapsedPanels = S.ui.collapsedPanels||{};
+  S.ui.hiddenSeries = S.ui.hiddenSeries||{};
+}
+
+let saveTimer=null;
+function saveData(immediate){
+  invalidateCalc();
+  const dot=document.getElementById('saveDot'), txt=document.getElementById('saveTxt');
+  if(dot){ dot.classList.add('saving'); }
+  if(txt){ txt.textContent='Đang lưu…'; }
+  clearTimeout(saveTimer);
+  const doWrite = ()=>{
+    try{
+      S.settings.lastSaved = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
+      if(dot) dot.classList.remove('saving');
+      if(txt){
+        const d=new Date();
+        txt.textContent = 'Đã lưu '+pad2(d.getHours())+':'+pad2(d.getMinutes())+':'+pad2(d.getSeconds());
+      }
+    }catch(e){
+      if(dot) dot.classList.remove('saving');
+      if(txt) txt.textContent='Lỗi lưu dữ liệu';
+      toast('Không lưu được dữ liệu: '+e.message,'err');
+    }
+  };
+  if(immediate) doWrite(); else saveTimer=setTimeout(doWrite, 350);
+}
+window.addEventListener('beforeunload', ()=>{ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); }catch(e){} });
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden'){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); }catch(e){} } });
+
+/* =========================================================================
+   2. TIMELINE
+   ========================================================================= */
+function allMonths(){
+  const out=[]; let k=S.timeline.start;
+  const guard = ymDiff(S.timeline.start, S.timeline.end);
+  for(let i=0;i<=guard && i<1200;i++){ out.push(k); k=ymAdd(k,1); }
+  return out;
+}
+/* Tháng hiển thị (bỏ các năm đang thu gọn) + nhóm theo năm để dựng header */
+function monthGroups(collapsedList){
+  const groups=[]; let cur=null;
+  allMonths().forEach(k=>{
+    const y=ymParse(k).y;
+    if(!cur||cur.year!==y){ cur={year:y, months:[], collapsed: collapsedList.indexOf(y)>=0}; groups.push(cur); }
+    cur.months.push(k);
+  });
+  return groups;
+}
+function visibleMonths(){
+  const out=[];
+  monthGroups(UI.collapsedYears).forEach(g=>{ if(!g.collapsed) out.push.apply(out,g.months); });
+  return out;
+}
+/* ---- tuần ---- */
+function weeksInMonth(k){ const {y,m}=ymParse(k); return Math.ceil(daysInMonth(y,m)/7); }
+function weeklyMonths(){
+  const out=[]; let k=S.weekly.start;
+  const n = ymDiff(S.weekly.start, S.weekly.end);
+  for(let i=0;i<=n && i<600;i++){ out.push(k); k=ymAdd(k,1); }
+  return out;
+}
+function weeklyGroups(){
+  const groups=[]; let cur=null;
+  weeklyMonths().forEach(k=>{
+    const y=ymParse(k).y;
+    if(!cur||cur.year!==y){ cur={year:y, months:[], collapsed: UI.collapsedWeeklyYears.indexOf(y)>=0}; groups.push(cur); }
+    cur.months.push({ym:k, weeks:weeksInMonth(k)});
+  });
+  return groups;
+}
+function visibleWeekCols(){
+  const cols=[];
+  weeklyGroups().forEach(g=>{
+    if(g.collapsed) return;
+    g.months.forEach(m=>{ for(let w=1;w<=m.weeks;w++) cols.push({ym:m.ym, w:w, key:m.ym+'-W'+w}); });
+  });
+  return cols;
+}
+function allWeekCols(){
+  const cols=[];
+  weeklyMonths().forEach(ym=>{ const n=weeksInMonth(ym); for(let w=1;w<=n;w++) cols.push({ym:ym,w:w,key:ym+'-W'+w}); });
+  return cols;
+}
+/* tuần hiện tại dựa trên ngày hệ thống: W = ceil(ngày/7) */
+function currentWeekKey(){
+  const d=new Date(); const k=ymOf(d);
+  const w=Math.min(Math.ceil(d.getDate()/7), weeksInMonth(k));
+  return k+'-W'+w;
+}
+
+/* =========================================================================
+   3. ENGINE — LÃI SUẤT THAM CHIẾU
+   ========================================================================= */
+function refById(id){ return S.refRates.find(r=>r.id===id)||null; }
+/* Giá trị benchmark tại tháng — hỗ trợ Calculated Rate (average), chống vòng lặp */
+function refValue(id, ym, seen){
+  seen = seen||{};
+  if(seen[id]) return null;                    // circular dependency
+  seen[id]=true;
+  const r = refById(id); if(!r) return null;
+  if(r.type==='calc'){
+    const vals=[];
+    (r.components||[]).forEach(cid=>{
+      const v = refValue(cid, ym, Object.assign({},seen));
+      if(v!==null && v!==undefined && isFinite(v)) vals.push(v);
+    });
+    if(!vals.length) return null;
+    if(r.method==='min') return Math.min.apply(null,vals);
+    if(r.method==='max') return Math.max.apply(null,vals);
+    return vals.reduce((a,b)=>a+b,0)/vals.length;   // average
+  }
+  const v = r.values[ym];
+  return (v===undefined||v===null||v==='')?null:Number(v);
+}
+/* Kiểm tra một benchmark có tạo vòng lặp nếu thêm component không */
+function wouldCycle(rateId, componentId){
+  if(rateId===componentId) return true;
+  const visit=(id,seen)=>{
+    if(id===rateId) return true;
+    if(seen[id]) return false; seen[id]=true;
+    const r=refById(id); if(!r||r.type!=='calc') return false;
+    return (r.components||[]).some(c=>visit(c,seen));
+  };
+  return visit(componentId,{});
+}
+
+/* =========================================================================
+   4. ENGINE — TRÁI PHIẾU
+   ========================================================================= */
+/* Cache kết quả tính toán trong một chu kỳ render — xóa mỗi khi dữ liệu thay đổi */
+let _calcCache={}, _cacheScheduled=false;
+function invalidateCalc(){ _calcCache={}; }
+/* Cache chỉ sống trong một lượt tính đồng bộ; tự xóa ở cuối tác vụ để không bao giờ trả số cũ */
+function cacheHold(){
+  if(_cacheScheduled) return;
+  _cacheScheduled=true;
+  Promise.resolve().then(()=>{ _calcCache={}; _cacheScheduled=false; });
+}
+function bondById(id){ return S.bonds.find(b=>b.id===id)||null; }
+function bmonth(b,k){
+  if(!b.months[k]) b.months[k]={};
+  return b.months[k];
+}
+function bondIssueYM(b){ const d=parseISO(b.info.issueDate); return d?ymOf(d):null; }
+function bondMaturityYM(b){ const d=parseISO(b.info.maturityDate); return d?ymOf(d):null; }
+/* Tháng có nằm trong vòng đời trái phiếu? Nếu thiếu ngày -> coi như hoạt động */
+function bondActiveMonth(b,k){
+  const i=bondIssueYM(b), m=bondMaturityYM(b);
+  if(i && ymDiff(i,k)<0) return false;
+  if(m && ymDiff(m,k)>0) return false;
+  return true;
+}
+function bondStatus(b){
+  const t=new Date(); const i=parseISO(b.info.issueDate), m=parseISO(b.info.maturityDate);
+  if(i && t<i) return {k:'pre', t:'Pre-Issuance'};
+  if(m && t>m) return {k:'matured', t:'Matured'};
+  if(!i && !m) return {k:'pre', t:'Chưa có ngày'};
+  return {k:'active', t:'Active'};
+}
+/* Kỳ trả lãi thứ mấy tại tháng k (1-based). Căn cứ ngày phát hành + số tháng/lần */
+function couponPeriod(b,k){
+  const iy=bondIssueYM(b); const f=num(b.info.payFreq);
+  if(!iy||f<=0) return null;
+  const d=ymDiff(iy,k);
+  if(d<0) return null;
+  return Math.floor(d/f)+1;
+}
+/* Coupon (%) của tháng — trả null nếu thiếu dữ liệu (không tự giả định) */
+function bondCoupon(b,k){
+  const r=b.rate;
+  if(r.type==='fixed'){ return (r.fixed===null||r.fixed==='')?null:Number(r.fixed); }
+  const ref = r.refId ? refValue(r.refId,k) : null;
+  const spread = (r.spread===null||r.spread==='')?null:Number(r.spread);
+  if(r.type==='floating'){
+    if(ref===null||spread===null) return null;
+    return spread+ref;
+  }
+  const p = couponPeriod(b,k);
+  const first4 = (r.first4===null||r.first4==='')?null:Number(r.first4);
+  if(r.type==='combined'||r.type==='conditional'){
+    if(p!==null && p<=4) return first4;
+    if(ref===null||spread===null) return null;
+    const raw = spread+ref;
+    if(r.type==='combined') return raw;
+    const fl=(r.floor===null||r.floor==='')?null:Number(r.floor);
+    const cp=(r.cap===null||r.cap==='')?null:Number(r.cap);
+    let v=raw;
+    if(cp!==null) v=Math.min(v,cp);
+    if(fl!==null) v=Math.max(v,fl);
+    return v;
+  }
+  return null;
+}
+/* Ngày bắt đầu/kết thúc nắm giữ mặc định: đầu/cuối tháng, cắt theo ngày PH/ĐH */
+function defaultHoldStart(b,k){
+  const iso=toISO(monthFirst(k)); const i=b.info.issueDate;
+  if(i && ymOf(parseISO(i))===k) return i;
+  return iso;
+}
+function defaultHoldEnd(b,k){
+  const iso=toISO(monthLast(k)); const m=b.info.maturityDate;
+  if(m && ymOf(parseISO(m))===k) return m;
+  return iso;
+}
+/* Mức phí (%) có hiệu lực tại tháng k.
+   f.rate là mức áp dụng từ đầu kỳ; mỗi mốc trong f.schedule là {from, rate}
+   nghĩa là "từ tháng from trở đi áp dụng mức này" (bậc thang, giữ tới mốc kế tiếp). */
+function feeRateAt(f,k){
+  let r = num(f.rate);
+  let best = null;
+  (f.schedule||[]).forEach(sc=>{
+    if(!sc.from || ymDiff(sc.from,k)<0) return;           // mốc chưa tới hiệu lực
+    if(!best || ymDiff(best.from, sc.from)>0) best=sc;     // giữ mốc muộn nhất đã hiệu lực
+  });
+  if(best && best.rate!==null && best.rate!=='' && best.rate!==undefined) r=num(best.rate);
+  return r;
+}
+function feeHasSchedule(f){ return (f.schedule||[]).length>0; }
+
+/* Kỳ thu của một loại phí định kỳ.
+   Kỳ thu đầu tiên bắt đầu từ "Ngày đầu tiên thu phí định kỳ" và kết thúc sau f.freq tháng;
+   các kỳ sau nối tiếp liên tục. Trả null nếu tháng k KHÔNG phải tháng kết thúc một kỳ thu. */
+function feePeriod(b,f,k){
+  /* Thiếu "Ngày đầu tiên thu phí định kỳ" thì lùi về ngày phát hành làm mốc,
+     để dòng phí vẫn tính được thay vì trống toàn bộ. */
+  const ff=parseISO(b.info.firstFeeDate) || parseISO(b.info.issueDate);
+  if(!ff) return null;
+  const ffym=ymOf(ff);
+  const freq=Math.max(1, Math.round(num(f&&f.freq)||1));
+  const timing=((f&&f.timing)==='begin')?'begin':'end';
+  const n=ymDiff(ffym,k);
+  if(n<0) return null;
+  /* Xác định k có phải THÁNG GHI NHẬN của một kỳ thu hay không.
+     Thu cuối kỳ → ghi nhận ở tháng cuối kỳ; thu đầu kỳ → ghi nhận ở tháng đầu kỳ. */
+  let idx;
+  if(timing==='end'){
+    if(n < freq-1) return null;
+    if((n-(freq-1))%freq!==0) return null;
+    idx=(n-(freq-1))/freq;
+  }else{
+    if(n%freq!==0) return null;
+    idx=n/freq;
+  }
+  const startYm=ymAdd(ffym, idx*freq), endYm=ymAdd(ffym, idx*freq+freq-1);
+  let start = (idx===0) ? ff : monthFirst(startYm);
+  const iss=parseISO(b.info.issueDate);
+  if(iss && iss>start) start=iss;
+  let end=monthLast(endYm);
+  const mat=parseISO(b.info.maturityDate);
+  if(mat && mat<end) end=mat;
+  const days=dayDiff(start,end)+1;
+  if(days<=0) return null;
+  return {start:start, end:end, days:days, freq:freq, timing:timing, index:idx, startYm:startYm, endYm:endYm};
+}
+/* Tính toàn bộ chỉ tiêu của 1 trái phiếu trong 1 tháng */
+function computeBondMonth(b,k){
+  const ck='b|'+b.id+'|'+k;
+  if(_calcCache[ck]) return _calcCache[ck];
+  cacheHold();
+  const md = b.months[k]||{};
+  const active = bondActiveMonth(b,k);
+  const advised = md.advised===undefined||md.advised===null?null:Number(md.advised);
+  const buyback = md.buyback===undefined||md.buyback===null?null:Number(md.buyback);
+  const invested= md.invested===undefined||md.invested===null?null:Number(md.invested);
+  const sold    = md.sold===undefined||md.sold===null?null:Number(md.sold);
+  const outstanding = (advised===null&&buyback===null)?null:(num(advised)+num(buyback));
+  const holding     = (invested===null&&sold===null)?null:(num(invested)+num(sold));
+  const coupon = active? bondCoupon(b,k) : null;
+  const ref = b.rate.refId? refValue(b.rate.refId,k) : null;
+  const par = num(b.info.parValue);
+
+  /* --- phí --- */
+  const fees={}, feeRates={}, feeDays={}, feePeriods={}; let feeTotal=0;
+  FEE_DEFS.forEach(def=>{
+    const f = b.fees.find(x=>x.key===def.key) || {rate:0,method:def.methods[0],schedule:[]};
+    const rate = feeRateAt(f,k)/100;
+    let amt=0;
+    if(rate!==0){
+      if(f.method==='once'){
+        if(f.recogMonth===k){
+          const base = def.base==='advised'? num(advised) : def.base==='invested'? num(invested) : num(outstanding);
+          amt = par*base*rate;
+        }
+      }else if(active){
+        const base = num(outstanding);
+        const per = feePeriod(b,f,k);          // null → tháng này không phải kỳ thu
+        if(per){
+          feeDays[def.key]=per.days;
+          feePeriods[def.key]=per;
+          amt = (f.method==='flat') ? par*base*rate : par*base*rate*per.days/365;
+        }
+      }
+    }
+    fees[def.key]=amt; feeTotal+=amt; feeRates[def.key]=feeRateAt(f,k);
+  });
+
+  /* --- coupon nắm giữ --- */
+  const hs = md.startDate || defaultHoldStart(b,k);
+  const he = md.endDate   || defaultHoldEnd(b,k);
+  const ds=parseISO(hs), de=parseISO(he);
+  let holdDays=null, holdErr=false;
+  if(ds&&de){
+    holdDays = dayDiff(ds,de)+1;
+    if(holdDays<0){ holdErr=true; holdDays=null; }
+  }
+  let couponRev=0;
+  if(active && coupon!==null && holding!==null && holdDays!==null && holdDays>0){
+    couponRev = par*holding*(coupon/100)*holdDays/365;
+  }
+  const res={
+    active, advised, buyback, outstanding, invested, sold, holding,
+    coupon, ref, fees, feeRates, feeDays, feePeriods, feeTotal, holdStart:hs, holdEnd:he, holdDays, holdErr,
+    couponRev, total: feeTotal+couponRev, par
+  };
+  _calcCache[ck]=res;
+  return res;
+}
+/* Đếm checklist sau đầu tư */
+function compList(b,itemKey,k){
+  if(!b.compliance[itemKey]) b.compliance[itemKey]={};
+  if(!b.compliance[itemKey][k]) b.compliance[itemKey][k]=[];
+  return b.compliance[itemKey][k];
+}
+function compCount(b,itemKey,k){
+  const arr=(b.compliance[itemKey]&&b.compliance[itemKey][k])||[];
+  return {done: arr.filter(x=>x.done).length, total: arr.length};
+}
+function bondCompTotal(b,k){
+  let done=0,total=0;
+  COMP_GROUPS.forEach(g=>g.items.forEach(it=>{
+    const c=compCount(b,it.key,k); done+=c.done; total+=c.total;
+  }));
+  return {done,total};
+}
+
+/* =========================================================================
+   5. ENGINE — TỔNG HỢP DASHBOARD
+   ========================================================================= */
+function irMonthTotal(k){
+  let t=0, any=false;
+  S.irJobs.forEach(j=>{ const v=j.values&&j.values[k];
+    if(v!==undefined&&v!==null&&v!==''){ t+=Number(v); any=true; } });
+  return any?t:0;
+}
+function dashMonth(k){
+  const ck='d|'+k;
+  if(_calcCache[ck]) return _calcCache[ck];
+  cacheHold();
+  let holding=0, holdingValue=0, advised=0, advisedValue=0, feeTotal=0, couponRev=0;
+  const feeByType={}; FEE_DEFS.forEach(f=>feeByType[f.key]=0);
+  const perBond={};
+  S.bonds.forEach(b=>{
+    const m=computeBondMonth(b,k);
+    perBond[b.id]=m;
+    holding += num(m.holding);
+    /* Giới hạn 70% VCSH so sánh theo GIÁ TRỊ, nên quy đổi khối lượng × mệnh giá của chính trái phiếu đó */
+    holdingValue += num(m.holding)*num(b.info.parValue);
+    advised += num(m.advised);
+    advisedValue += num(m.advised)*num(b.info.parValue);
+    feeTotal += m.feeTotal;
+    couponRev += m.couponRev;
+    FEE_DEFS.forEach(f=>feeByType[f.key]+=m.fees[f.key]);
+  });
+  const ir = irMonthTotal(k);
+  const eq = S.equity[k];
+  /* eslint-disable */
+  const equity = (eq===undefined||eq===null||eq==='')?null:Number(eq);
+  const limit = equity===null?null:equity*0.7;
+  const res={
+    holding, holdingValue, advised, advisedValue, feeTotal, couponRev, ir, perBond, feeByType,
+    equity, limit,
+    remaining: limit===null?null:limit-holdingValue,
+    usage: (limit===null||limit===0)?null:holdingValue/limit,
+    revenue: feeTotal+couponRev+ir
+  };
+  _calcCache[ck]=res;
+  return res;
+}
+function dashCompCount(itemKey,k){
+  let done=0,total=0;
+  S.bonds.forEach(b=>{ const c=compCount(b,itemKey,k); done+=c.done; total+=c.total; });
+  return {done,total};
+}
+/* Lãi coupon dự thu theo tuần (tab Theo dõi DM tuần) */
+function weeklyVol(bondId, wkey){
+  const m=S.weekly.volumes[bondId];
+  if(!m) return null;
+  const v=m[wkey];
+  return (v===undefined||v===null||v==='')?null:Number(v);
+}
+function weeklyAccrual(wkey){
+  const ym = wkey.slice(0,7);
+  const {y,m} = ymParse(ym);
+  const dim = daysInMonth(y,m);
+  let total=0, any=false;
+  const rows=[];
+  S.bonds.forEach(b=>{
+    const vol = weeklyVol(b.id,wkey);
+    const cpn = bondCoupon(b,ym);
+    let v=null;
+    if(vol!==null && cpn!==null){
+      v = num(b.info.parValue)*vol*(cpn/100)*dim/365;
+      total+=v; any=true;
+    }
+    rows.push({bond:b, vol, cpn, accr:v});
+  });
+  return {total: any?total:null, rows};
+}
+function latestWeekWithData(){
+  const cols=allWeekCols();
+  let last=null;
+  cols.forEach(c=>{
+    const has = S.bonds.some(b=>weeklyVol(b.id,c.key)!==null);
+    if(has) last=c;
+  });
+  return last;
+}
+/* =========================================================================
+   6. TOAST & MODAL
+   ========================================================================= */
+function toast(msg, kind){
+  const root=document.getElementById('toastRoot');
+  const el=document.createElement('div');
+  el.className='toast'+(kind?' '+kind:'');
+  el.textContent=msg;
+  root.appendChild(el);
+  setTimeout(()=>{ el.style.transition='opacity .25s'; el.style.opacity='0'; setTimeout(()=>el.remove(),260); }, 2600);
+}
+let modalOnOk=null;
+function openModal(opts){
+  closeModal();
+  const root=document.getElementById('modalRoot');
+  root.innerHTML =
+   '<div class="mask" data-mask="1"><div class="modal'+(opts.wide?' wide':'')+'" role="dialog" aria-modal="true">'+
+   '<header>'+esc(opts.title)+'</header>'+
+   '<div class="mbody">'+opts.body+'</div>'+
+   '<footer>'+
+     '<button class="btn" data-modal="cancel">'+esc(opts.cancelText||'Hủy')+'</button>'+
+     (opts.okText===null?'':'<button class="btn '+(opts.danger?'danger':'primary')+'" data-modal="ok">'+esc(opts.okText||'Xác nhận')+'</button>')+
+   '</footer></div></div>';
+  modalOnOk = opts.onOk||null;
+  /* Truyền chính phần tử .modal — nó được dựng mới mỗi lần mở, nên listener
+     gắn vào đây không bị cộng dồn qua các lần mở như khi gắn vào #modalRoot. */
+  if(opts.onOpen) opts.onOpen(root.querySelector('.modal'));
+  const f=root.querySelector('input,select,textarea'); if(f) setTimeout(()=>f.focus(),40);
+}
+function closeModal(){
+  const had=document.getElementById('modalRoot').innerHTML!=='';
+  document.getElementById('modalRoot').innerHTML=''; modalOnOk=null;
+  /* dòng “% phí áp dụng” chỉ tồn tại khi có lịch → dựng lại tab trái phiếu sau khi sửa lịch */
+  if(had && _reRenderOnClose){ _reRenderOnClose=false; render(); }
+}
+let _reRenderOnClose=false;
+document.addEventListener('click', e=>{
+  const b=e.target.closest('[data-modal]');
+  if(b){
+    if(b.dataset.modal==='cancel'){ closeModal(); return; }
+    if(b.dataset.modal==='ok'){
+      const fn=modalOnOk;
+      if(fn){ const r=fn(document.getElementById('modalRoot')); if(r===false) return; }
+      closeModal(); return;
+    }
+  }
+  if(e.target.dataset && e.target.dataset.mask) closeModal();
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') closeModal();
+  if(e.key==='Enter' && document.getElementById('modalRoot').firstChild && !e.target.closest('textarea')){
+    const ok=document.querySelector('[data-modal="ok"]'); if(ok) ok.click();
+  }
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); saveData(true); toast('Đã lưu dữ liệu','ok'); }
+});
+function confirmDialog(title,msg,okText,onOk){
+  openModal({title:title, body:'<p style="margin:0;line-height:1.5">'+msg+'</p>', okText:okText||'Xóa', danger:true, onOk:onOk});
+}
+
+/* =========================================================================
+   7. ĐIỀU HƯỚNG
+   ========================================================================= */
+function renderNav(){
+  const q=(document.getElementById('bondSearch')||{}).value||'';
+  const list=document.getElementById('navlist');
+  let h='<div class="navgroup">Hệ thống</div>';
+  SYSTEM_VIEWS.forEach(v=>{
+    h+='<div class="navitem'+(UI.view===v.id?' active':'')+'" data-nav="'+v.id+'" title="'+esc(v.name)+'">'+
+       '<span class="ic">'+v.ic+'</span><span class="lbl">'+esc(v.name)+'</span></div>';
+  });
+  const bonds = S.bonds.filter(b=>!q || b.code.toLowerCase().indexOf(q.toLowerCase())>=0);
+  h+='<div class="navgroup">Trái phiếu ('+S.bonds.length+')</div>';
+  if(!bonds.length){
+    h+='<div style="padding:6px 14px;font-size:11px;color:#7d97b5" class="hide-c">'+(q?'Không có mã khớp':'Chưa có trái phiếu')+'</div>';
+  }
+  bonds.forEach(b=>{
+    const st=bondStatus(b);
+    h+='<div class="navitem'+(UI.view==='bond'&&UI.bondId===b.id?' active':'')+'" data-nav="bond" data-bond="'+b.id+'" title="'+esc(b.code)+'">'+
+       '<span class="ic">TP</span><span class="lbl">'+esc(b.code)+'</span>'+
+       '<span class="badge">'+(st.k==='active'?'A':st.k==='matured'?'M':'P')+'</span></div>';
+  });
+  h+='<button class="navbtn" data-act="addBond" title="Thêm trái phiếu">+ <span class="hide-c">Thêm trái phiếu</span></button>';
+  list.innerHTML=h;
+}
+
+function go(view, bondId){
+  UI.view=view; if(view==='bond') UI.bondId=bondId;
+  saveData();
+  render();
+  document.getElementById('content').scrollTop=0;
+  window.scrollTo(0,0);
+}
+
+/* =========================================================================
+   8. ROUTER
+   ========================================================================= */
+function render(){
+  invalidateCalc();
+  renderNav();
+  const c=document.getElementById('content');
+  const t=document.getElementById('viewTitle'), sub=document.getElementById('viewSub');
+  switch(UI.view){
+    case 'control':   t.textContent='Control'; sub.textContent='Lãi suất tham chiếu theo tháng'; c.innerHTML=viewControl(); afterControl(); break;
+    case 'contracts': t.textContent='Sổ Hợp đồng'; sub.textContent='Danh mục hợp đồng theo dự án'; c.innerHTML=viewContracts(); break;
+    case 'ir':        t.textContent='Dịch vụ IR'; sub.textContent='Doanh thu dịch vụ IR theo tháng (triệu đồng)'; c.innerHTML=viewIR(); break;
+    case 'weekly':    t.textContent='Theo dõi DM tuần'; sub.textContent='Lãi coupon dự thu theo danh mục tuần'; c.innerHTML=viewWeekly(); break;
+    case 'bond': {
+      const b=bondById(UI.bondId);
+      if(!b){ UI.view='dashboard'; return render(); }
+      t.textContent=b.code; sub.textContent='Tab trái phiếu';
+      c.innerHTML=viewBond(b); break;
+    }
+    default:
+      UI.view='dashboard';
+      t.textContent='Dashboard'; sub.textContent='Tổng hợp hoạt động Phòng IB';
+      c.innerHTML=viewDashboard(); afterDashboard();
+  }
+  restorePanels();
+  addFillerColumn();
+}
+/* Chèn cột đệm cuối mỗi bảng lưới: cột này nhận toàn bộ khoảng trống thừa,
+   giữ các cột tháng/tuần đúng bằng độ rộng nội dung. */
+function addFillerColumn(){
+  $$('#content table.grid').forEach(tb=>{
+    if(tb.dataset.filled) return;
+    if((tb.getAttribute('style')||'').indexOf('width:100%')>=0) { tb.dataset.filled='1'; return; }
+    const thead=tb.tHead, tbody=tb.tBodies[0];
+    if(!thead || !thead.rows.length || !tbody) return;
+    const th=document.createElement('th');
+    th.className='fill'; th.rowSpan=thead.rows.length;
+    thead.rows[0].appendChild(th);
+    Array.prototype.forEach.call(tbody.rows, r=>{
+      const td=document.createElement('td'); td.className='fill'; r.appendChild(td);
+    });
+    tb.dataset.filled='1';
+  });
+}
+function restorePanels(){
+  $$('.panel[data-pk]').forEach(p=>{
+    if(UI.collapsedPanels[p.dataset.pk]) p.classList.add('collapsed');
+  });
+  ['vol','rate','fee','rev','comp'].forEach(g=>{ if(UI.collapsedPanels['g_'+g]) applyGroup(g); });
+}
+
+/* =========================================================================
+   9. THÀNH PHẦN DÙNG CHUNG
+   ========================================================================= */
+function panel(key,title,bodyHtml,hint,flush){
+  return '<section class="panel" data-pk="'+key+'">'+
+    '<header data-panel="'+key+'"><span class="caret">▾</span><h2>'+esc(title)+'</h2>'+
+    (hint?'<span class="hint">'+hint+'</span>':'')+'<span class="spacer"></span></header>'+
+    '<div class="body'+(flush?' flush':'')+'">'+bodyHtml+'</div></section>';
+}
+/* Header 2 dòng: năm (có nút thu gọn) + tháng */
+function monthHeader(collapsedList, navActs){
+  const groups=monthGroups(collapsedList);
+  const cur=curYM();
+  let r1='<tr class="r1"><th class="s1" rowspan="2">#</th><th class="s2" rowspan="2">Chỉ tiêu</th>';
+  let r2='<tr class="r2">';
+  groups.forEach(g=>{
+    if(g.collapsed) return;   // năm thu gọn: ẩn hoàn toàn khỏi bảng, bật lại bằng chip phía trên
+    r1+='<th colspan="'+g.months.length+'"><button class="btn sm" data-act="'+navActs.toggleYear+'" data-year="'+g.year+'">▾ '+g.year+'</button></th>';
+    g.months.forEach(k=>{
+      const mm=ymParse(k).m;
+      r2+='<th class="'+(k===cur?'cur':'')+'">'+MONTH_SHORT[mm-1]+'</th>';
+    });
+  });
+  r1+='</tr>'; r2+='</tr>';
+  return '<thead>'+r1+r2+'</thead>';
+}
+function yearChips(){
+  return monthGroups(UI.collapsedYears).map(g=>
+    '<button class="btn sm'+(g.collapsed?'':' primary')+'" data-act="toggleYear" data-year="'+g.year+'" '+
+    'title="'+(g.collapsed?'Mở rộng':'Thu gọn')+' năm '+g.year+'">'+(g.collapsed?'▸':'▾')+' '+g.year+'</button>').join('');
+}
+function timelineToolbar(){
+  return '<div class="toolbar">'+
+    '<button class="btn sm" data-act="tlPrev">« Thêm tháng trước</button>'+
+    '<button class="btn sm" data-act="tlNext">Thêm tháng sau »</button>'+
+    '<button class="btn sm" data-act="tlYear">+ Thêm 12 tháng</button>'+
+    '<span class="hint" style="margin-left:4px">Nhóm theo năm:</span>'+yearChips()+
+    '</div>';
+}
+/* ô nhập số trong bảng */
+function cellInput(dataset, value, opts){
+  opts=opts||{};
+  const v = fmtInput(value);
+  let attrs='';
+  for(const k in dataset) attrs+=' data-'+k+'="'+esc(dataset[k])+'"';
+  return '<input class="cell'+(opts.cls?' '+opts.cls:'')+'" type="text" value="'+esc(v)+'"'+attrs+
+         ' data-numinput="1" data-dec="'+(opts.dec||0)+'"'+(opts.title?' title="'+esc(opts.title)+'"':'')+'>';
+}
+function numCell(v, opts){
+  opts=opts||{};
+  const cls=[];
+  if(opts.calc!==false) cls.push('calc');
+  if(v!==null && v<0) cls.push('neg');
+  const id=opts.id?' id="'+opts.id+'"':'';
+  const t=opts.title?' title="'+esc(opts.title)+'"':'';
+  return '<td class="'+cls.concat(opts.extra||[]).join(' ')+'"'+id+t+'>'+(opts.pct?fmtPct(v,opts.dec):fmt(v,opts.dec||0))+'</td>';
+}
+function classFor(v){ return (v!==null&&v<0)?'calc neg':'calc'; }
+/* =========================================================================
+   10. DASHBOARD
+   ========================================================================= */
+function dashAlerts(){
+  const out=[]; const today=new Date(); const cur=curYM();
+  const d=dashMonth(cur);
+  if(d.limit!==null){
+    if(d.holdingValue>d.limit) out.push({k:'d',t:'Vượt giới hạn danh mục',s:'Giá trị TP nắm giữ '+fmt(d.holdingValue,1)+' trđ > giới hạn 70% VCSH '+fmt(d.limit,1)+' trđ (tháng '+cur.slice(5)+'/'+cur.slice(0,4)+')'});
+    else if(d.usage!==null && d.usage>=0.9) out.push({k:'w',t:'Danh mục gần chạm giới hạn',s:'Đã sử dụng '+fmtPct(d.usage*100)+' giới hạn 70% VCSH'});
+  }else{
+    out.push({k:'i',t:'Chưa nhập Vốn chủ sở hữu tháng này',s:'Nhập VCSH để tính giới hạn danh mục 70%'});
+  }
+  S.bonds.forEach(b=>{
+    const m=parseISO(b.info.maturityDate);
+    if(m){ const dd=dayDiff(today,m); if(dd>=0&&dd<=90) out.push({k:'w',t:b.code+' sắp đáo hạn',s:'Còn '+dd+' ngày (đáo hạn '+fmtDate(b.info.maturityDate)+')'}); }
+  });
+  const missing=[];
+  S.refRates.filter(r=>r.type==='manual').forEach(r=>{
+    const v=r.values[cur];
+    if(v===undefined||v===null||v==='') missing.push(r.name);
+  });
+  if(missing.length) out.push({k:'w',t:'Benchmark chưa cập nhật tháng '+cur.slice(5)+'/'+cur.slice(0,4),s:missing.join(' · ')});
+  S.bonds.forEach(b=>{
+    if(b.rate.type!=='fixed'){
+      if(!b.rate.refId) out.push({k:'w',t:b.code+' chưa chọn lãi suất tham chiếu',s:'Coupon không tính được cho kỳ thả nổi'});
+      else if(refValue(b.rate.refId,cur)===null) out.push({k:'w',t:b.code+': benchmark thiếu dữ liệu tháng này',s:'Benchmark "'+(refById(b.rate.refId)||{name:'?'}).name+'" chưa có lãi suất tháng '+cur.slice(5)+'/'+cur.slice(0,4)});
+    }
+  });
+  let outstanding=0;
+  S.bonds.forEach(b=>{ const c=bondCompTotal(b,cur); outstanding += (c.total-c.done); });
+  if(outstanding>0) out.push({k:'w',t:'Còn '+outstanding+' đầu việc sau đầu tư chưa hoàn thành',s:'Tháng '+cur.slice(5)+'/'+cur.slice(0,4)});
+  const lw=latestWeekWithData(); const cw=currentWeekKey();
+  if(!lw || lw.key!==cw) out.push({k:'i',t:'Danh mục tuần chưa cập nhật',s: lw? ('Tuần gần nhất có dữ liệu: '+lw.key.slice(0,7)+' W'+lw.w) : 'Chưa có dữ liệu khối lượng tuần nào'});
+  return out;
+}
+function upcomingDeadlines(){
+  const out=[]; const today=new Date();
+  S.bonds.forEach(b=>{
+    const m=parseISO(b.info.maturityDate);
+    if(m){ const dd=dayDiff(today,m); if(dd>=0&&dd<=30) out.push({d:dd, t:b.code+' đáo hạn', s:fmtDate(b.info.maturityDate)}); }
+  });
+  // deadline cập nhật LS: tuần cuối tháng
+  const y=today.getFullYear(), mo=today.getMonth()+1;
+  const lastDay=daysInMonth(y,mo);
+  const rateDeadline=new Date(y,mo-1,lastDay-6);
+  let dd=dayDiff(today,rateDeadline); if(dd<0) dd=0;
+  out.push({d:dd, t:'Kỳ cập nhật lãi suất tham chiếu', s:'Tuần cuối tháng '+mo+'/'+y});
+  // deadline cập nhật DM tuần: thứ 6
+  let dw=(5-today.getDay()+7)%7;
+  out.push({d:dw, t:'Cập nhật danh mục tuần', s:dw===0?'Hôm nay (thứ 6)':'Thứ 6 tuần này'});
+  const cur=curYM();
+  S.bonds.forEach(b=>{
+    const c=bondCompTotal(b,cur);
+    if(c.total-c.done>0) out.push({d:dayDiff(today,monthLast(cur)), t:b.code+': '+(c.total-c.done)+' việc sau đầu tư', s:'Hạn cuối tháng '+cur.slice(5)+'/'+cur.slice(0,4)});
+  });
+  out.sort((a,b)=>a.d-b.d);
+  return out.slice(0,8);
+}
+
+function viewDashboard(){
+  const months=visibleMonths();
+  const cur=curYM();
+  const d=dashMonth(cur);
+  const compCur=(()=>{ let done=0,total=0; S.bonds.forEach(b=>{const c=bondCompTotal(b,cur); done+=c.done; total+=c.total;}); return {done,total}; })();
+
+  /* ---- KPI ---- */
+  const usageCls = d.usage===null?'':(d.usage>1?'bad':d.usage>=0.9?'warn':'good');
+  let h='<div class="kpigrid">'+
+    kpi('d_k_hold','Giá trị TP nắm giữ','', fmt(d.holdingValue,0), 'Tháng '+cur.slice(5)+'/'+cur.slice(0,4)+' · '+fmt(d.holding)+' TP · triệu đồng')+
+    kpi('d_k_lim','Giới hạn 70% VCSH','', d.limit===null?'–':fmt(d.limit), d.equity===null?'Chưa nhập VCSH':'VCSH '+fmt(d.equity))+
+    kpi('d_k_rem','Room còn lại', d.remaining!==null&&d.remaining<0?'bad':'good', d.remaining===null?'–':fmt(d.remaining), 'Giới hạn − nắm giữ')+
+    kpi('d_k_use','% giới hạn đã dùng', usageCls, d.usage===null?'–':fmtPct(d.usage*100), 'Danh mục đầu tư')+
+    kpi('d_k_rev','Doanh thu tháng này','', fmt(d.revenue,1), 'Phí + Coupon + IR')+
+    kpi('d_k_fee','Doanh thu Phí','', fmt(d.feeTotal,1), '')+
+    kpi('d_k_cpn','Doanh thu Coupon','', fmt(d.couponRev,1), '')+
+    kpi('d_k_ir','Doanh thu IR','', fmt(d.ir,1), '')+
+    kpi('d_k_comp','Sau đầu tư tháng này', compCur.total&&compCur.done<compCur.total?'warn':'good',
+        compCur.done+'/'+compCur.total, 'Hoàn thành / tổng đầu việc')+
+  '</div>';
+
+  /* ---- Cảnh báo + deadline ---- */
+  const al=dashAlerts(), dl=upcomingDeadlines();
+  h+='<div style="display:grid;grid-template-columns:1.6fr 1fr;gap:14px;align-items:start" class="dashsplit">';
+  h+= panel('pnl_alert','Cảnh báo điều hành',
+        al.length? '<div class="alerts">'+al.map(a=>'<div class="alert '+a.k+'"><div><div class="t">'+esc(a.t)+'</div><div class="s">'+esc(a.s)+'</div></div></div>').join('')+'</div>'
+                 : '<div class="empty">Không có cảnh báo. Danh mục và tuân thủ đang trong ngưỡng.</div>');
+  h+= panel('pnl_dl','Deadline 30 ngày tới',
+        dl.length? '<div class="alerts">'+dl.map(a=>'<div class="alert '+(a.d<=3?'w':'i')+'"><div style="font-variant-numeric:tabular-nums;font-weight:700;min-width:38px">'+a.d+'n</div><div><div class="t">'+esc(a.t)+'</div><div class="s">'+esc(a.s)+'</div></div></div>').join('')+'</div>'
+                 : '<div class="empty">Không có deadline gần.</div>');
+  h+='</div>';
+
+  h+=timelineToolbar();
+
+  /* ---- I. DANH MỤC TRÁI PHIẾU TPS ---- */
+  let t='<div class="tblwrap"><table class="grid">'+monthHeader(UI.collapsedYears,{toggleYear:'toggleYear'})+'<tbody>';
+  t+=row('section','','I. DANH MỤC TRÁI PHIẾU TPS (triệu đồng)',months.length);
+  t+='<tr><td class="s1"></td><td class="s2">Vốn chủ sở hữu TPS</td>'+
+      months.map(k=>'<td class="'+(k===cur?'cur':'')+'">'+cellInput({eq:k},S.equity[k],{dec:2})+'</td>').join('')+'</tr>';
+  t+='<tr class="sub"><td class="s1"></td><td class="s2">Giới hạn Danh mục Trái phiếu (70% VCSH)</td>'+
+      months.map(k=>{ const dm=dashMonth(k); return '<td class="calc" id="d_lim_'+k+'">'+fmt(dm.limit,1)+'</td>'; }).join('')+'</tr>';
+
+  t+=row('sub','A.','TRÁI PHIẾU TPS ĐẦU TƯ',months.length);
+  t+='<tr class="sub"><td class="s1"></td><td class="s2">Tổng khối lượng TP nắm giữ</td>'+
+      months.map(k=>{ const dm=dashMonth(k); return '<td class="calc" id="d_hold_'+k+'">'+fmt(dm.holding)+'</td>'; }).join('')+'</tr>';
+  S.bonds.forEach(b=>{
+    t+='<tr><td class="s1"></td><td class="s2 lvl2">'+esc(b.code)+'</td>'+
+      months.map(k=>{ const m=computeBondMonth(b,k);
+        return '<td class="calc'+(m.holding!==null&&m.holding<0?' neg':'')+(m.active?'':' inactive')+'" id="d_bh_'+b.id+'_'+k+'">'+fmt(m.holding)+'</td>'; }).join('')+'</tr>';
+  });
+  t+='<tr class="total"><td class="s1"></td><td class="s2" title="Tổng của (Khối lượng nắm giữ × Mệnh giá) từng trái phiếu">Tổng Giá trị TP nắm giữ (trđ)</td>'+
+      months.map(k=>{ const dm=dashMonth(k); return '<td id="d_holdv_'+k+'" class="'+holdCls(dm)+'" title="'+holdTitle(dm)+'">'+fmt(dm.holdingValue,0)+'</td>'; }).join('')+'</tr>';
+  t+='<tr><td class="s1"></td><td class="s2">Remaining Capacity (70% VCSH − giá trị nắm giữ)</td>'+
+      months.map(k=>{ const dm=dashMonth(k); return '<td class="calc'+(dm.remaining!==null&&dm.remaining<0?' neg':'')+'" id="d_rem_'+k+'">'+fmt(dm.remaining,1)+'</td>'; }).join('')+'</tr>';
+  t+='<tr><td class="s1"></td><td class="s2">% giới hạn đã sử dụng</td>'+
+      months.map(k=>{ const dm=dashMonth(k); return '<td class="'+useCls(dm)+'" id="d_use_'+k+'">'+(dm.usage===null?'–':fmtPct(dm.usage*100))+'</td>'; }).join('')+'</tr>';
+
+  t+=row('sub','B.','TRÁI PHIẾU TPS TƯ VẤN PHÁT HÀNH',months.length);
+  t+='<tr class="total"><td class="s1"></td><td class="s2">Tổng khối lượng TP tư vấn</td>'+
+      months.map(k=>{ const dm=dashMonth(k); return '<td class="calc" id="d_adv_'+k+'">'+fmt(dm.advised)+'</td>'; }).join('')+'</tr>';
+  S.bonds.forEach(b=>{
+    t+='<tr><td class="s1"></td><td class="s2 lvl2">'+esc(b.code)+'</td>'+
+      months.map(k=>{ const m=computeBondMonth(b,k);
+        return '<td class="calc'+(m.active?'':' inactive')+'" id="d_ba_'+b.id+'_'+k+'">'+fmt(m.advised)+'</td>'; }).join('')+'</tr>';
+  });
+  if(!S.bonds.length) t+='<tr><td class="s1"></td><td class="s2" colspan="'+(months.length+1)+'" style="text-align:left;color:#7a8797">Chưa có trái phiếu. Dùng nút “+ Thêm trái phiếu” ở thanh trái.</td></tr>';
+  t+='</tbody></table></div>';
+  h+=panel('pnl_port','I. Danh mục trái phiếu TPS', t, 'Giới hạn 70% VCSH chỉ áp dụng cho danh mục đầu tư', true);
+
+  /* ---- II. DOANH THU ---- */
+  let r='<div class="tblwrap"><table class="grid">'+monthHeader(UI.collapsedYears,{toggleYear:'toggleYear'})+'<tbody>';
+  r+=row('section','','II. DOANH THU PHÒNG IB (triệu đồng)',months.length);
+  r+='<tr class="sub"><td class="s1">(1)</td><td class="s2">Doanh thu từ Phí</td>'+
+      months.map(k=>{const dm=dashMonth(k); return '<td class="calc" id="d_fee1_'+k+'">'+fmt(dm.feeTotal,1)+'</td>';}).join('')+'</tr>';
+  FEE_DEFS.forEach(f=>{
+    r+='<tr><td class="s1"></td><td class="s2 lvl2">'+esc(f.name)+'</td>'+
+       months.map(k=>{const dm=dashMonth(k); return '<td class="calc" id="d_fee_'+f.key+'_'+k+'">'+fmt(dm.feeByType[f.key],1)+'</td>';}).join('')+'</tr>';
+  });
+  r+='<tr class="sub"><td class="s1">(2)</td><td class="s2">Doanh thu từ Lãi coupon nắm giữ</td>'+
+      months.map(k=>{const dm=dashMonth(k); return '<td class="calc" id="d_cpn_'+k+'">'+fmt(dm.couponRev,1)+'</td>';}).join('')+'</tr>';
+  r+='<tr class="sub"><td class="s1">(3)</td><td class="s2">Doanh thu từ dịch vụ IR</td>'+
+      months.map(k=>{const dm=dashMonth(k); return '<td class="calc" id="d_ir_'+k+'">'+fmt(dm.ir,1)+'</td>';}).join('')+'</tr>';
+  r+='<tr class="grand"><td class="s1"></td><td class="s2">Tổng doanh thu = (1)+(2)+(3)</td>'+
+      months.map(k=>{const dm=dashMonth(k); return '<td id="d_rev_'+k+'">'+fmt(dm.revenue,1)+'</td>';}).join('')+'</tr>';
+  r+='</tbody></table></div>';
+  h+=panel('pnl_rev','II. Doanh thu Phòng IB', r, 'Tổng hợp tự động từ các tab trái phiếu và tab Dịch vụ IR', true);
+
+  /* ---- III. TUÂN THỦ ---- */
+  let cmp='<div class="tblwrap"><table class="grid">'+monthHeader(UI.collapsedYears,{toggleYear:'toggleYear'})+'<tbody>';
+  cmp+=row('section','','III. KIỂM SOÁT TUÂN THỦ (số đầu việc hoàn thành)',months.length);
+  COMP_GROUPS.forEach((g,gi)=>{
+    cmp+='<tr class="sub"><td class="s1">3.'+(gi+1)+'</td><td class="s2">'+esc(g.name)+'</td>'+
+      months.map(k=>{ let done=0,total=0; g.items.forEach(it=>{const c=dashCompCount(it.key,k); done+=c.done; total+=c.total;});
+        return '<td class="calc" id="d_cg_'+g.key+'_'+k+'">'+(total?done+'/'+total:'-')+'</td>';}).join('')+'</tr>';
+    g.items.forEach(it=>{
+      cmp+='<tr><td class="s1"></td><td class="s2 lvl2">'+esc(it.name)+'</td>'+
+        months.map(k=>{const c=dashCompCount(it.key,k);
+          return '<td class="calc'+(c.total&&c.done===c.total?' ':'')+'" id="d_c_'+it.key+'_'+k+'">'+(c.total?c.done+'/'+c.total:'-')+'</td>';}).join('')+'</tr>';
+    });
+  });
+  cmp+='</tbody></table></div>';
+  h+=panel('pnl_comp','III. Kiểm soát tuân thủ', cmp, 'Đếm theo số checkbox đã hoàn thành trên tất cả trái phiếu', true);
+
+  /* ---- CHARTS ---- */
+  h+=panel('pnl_ch1','Biểu đồ 1 — Giá trị danh mục nắm giữ vs giới hạn 70% VCSH','<div class="chartbox" id="chart1"></div>');
+  h+=panel('pnl_ch2','Biểu đồ 2 — Cơ cấu doanh thu theo tháng','<div class="chartbox" id="chart2"></div>');
+  h+=panel('pnl_ch3','Biểu đồ 3 — Khối lượng công việc tuân thủ','<div class="chartbox" id="chart3"></div>');
+  h+='<div class="toolbar"><button class="btn sm" data-act="exportCsvDash">Xuất Excel (CSV) — Dashboard</button></div>';
+  return h;
+}
+function kpi(id,label,cls,val,meta){
+  return '<div class="kpi '+(cls||'')+'" id="'+id+'"><div class="k">'+esc(label)+'</div><div class="v">'+val+'</div>'+
+         (meta?'<div class="m">'+esc(meta)+'</div>':'')+'</div>';
+}
+function row(cls,stt,label,span){
+  return '<tr class="'+cls+'"><td class="s1">'+esc(stt)+'</td><td class="s2">'+esc(label)+'</td>'+
+         (span?new Array(span).fill('<td></td>').join(''):'')+'</tr>';
+}
+function holdCls(dm){
+  if(dm.limit===null) return 'calc';
+  if(dm.holdingValue>dm.limit) return 'calc neg';
+  if(dm.usage!==null&&dm.usage>=0.9) return 'calc missing';
+  return 'calc';
+}
+function holdTitle(dm){ return dm.limit===null?'Chưa có VCSH để so sánh giới hạn':'Σ (Khối lượng nắm giữ × Mệnh giá) · Giới hạn 70% VCSH: '+fmt(dm.limit,1); }
+function useCls(dm){
+  if(dm.usage===null) return 'calc';
+  if(dm.usage>1) return 'calc neg';
+  if(dm.usage>=0.9) return 'calc missing';
+  return 'calc';
+}
+let _chartTimer=null;
+function afterDashboard(){
+  drawDashCharts();
+}
+function drawDashCharts(){
+  const months=visibleMonths();
+  const labels=months.map(k=>MONTH_SHORT[ymParse(k).m-1]+'/'+String(ymParse(k).y).slice(2));
+  const hold=[], lim=[], fee=[], cpn=[], ir=[], cdone=[], ctot=[];
+  months.forEach(k=>{
+    const d=dashMonth(k);
+    hold.push(d.holdingValue); lim.push(d.limit);
+    fee.push(d.feeTotal); cpn.push(d.couponRev); ir.push(d.ir);
+    let done=0,total=0; S.bonds.forEach(b=>{const c=bondCompTotal(b,k); done+=c.done; total+=c.total;});
+    cdone.push(done); ctot.push(total);
+  });
+  const c1=document.getElementById('chart1');
+  if(c1) c1.innerHTML=lineChart(labels,[{name:'Giá trị TP nắm giữ',data:hold,color:'#1b4f8a'},{name:'Giới hạn 70% VCSH',data:lim,color:'#c02b2b',dash:true}],{unit:' trđ',dec:0});
+  const c2=document.getElementById('chart2');
+  if(c2) c2.innerHTML=stackedBar(labels,[{name:'Phí',data:fee,color:'#1b4f8a'},{name:'Coupon',data:cpn,color:'#0a7d46'},{name:'IR',data:ir,color:'#c47b00'}],{unit:' trđ',dec:1});
+  const c3=document.getElementById('chart3');
+  if(c3) c3.innerHTML=groupedBar(labels,[{name:'Tổng đầu việc',data:ctot,color:'#8fa8c4'},{name:'Đã hoàn thành',data:cdone,color:'#0a7d46'}],{unit:' việc',dec:0});
+}
+/* Cập nhật ô công thức Dashboard mà không dựng lại DOM (giữ con trỏ nhập liệu) */
+function refreshDashboard(){
+  invalidateCalc();
+  const months=visibleMonths(); const cur=curYM();
+  months.forEach(k=>{
+    const dm=dashMonth(k);
+    set('d_lim_'+k, fmt(dm.limit,1));
+    set('d_hold_'+k, fmt(dm.holding));
+    const hEl=document.getElementById('d_holdv_'+k);
+    if(hEl){ hEl.textContent=fmt(dm.holdingValue,0); hEl.className=holdCls(dm); hEl.title=holdTitle(dm); }
+    set('d_rem_'+k, fmt(dm.remaining,1), dm.remaining!==null&&dm.remaining<0?'calc neg':'calc');
+    set('d_use_'+k, dm.usage===null?'–':fmtPct(dm.usage*100), useCls(dm));
+    set('d_adv_'+k, fmt(dm.advised));
+    S.bonds.forEach(b=>{
+      const m=dm.perBond[b.id];
+      set('d_bh_'+b.id+'_'+k, fmt(m.holding), 'calc'+(m.holding!==null&&m.holding<0?' neg':'')+(m.active?'':' inactive'));
+      set('d_ba_'+b.id+'_'+k, fmt(m.advised), 'calc'+(m.active?'':' inactive'));
+    });
+    set('d_fee1_'+k, fmt(dm.feeTotal,1));
+    FEE_DEFS.forEach(f=>set('d_fee_'+f.key+'_'+k, fmt(dm.feeByType[f.key],1)));
+    set('d_cpn_'+k, fmt(dm.couponRev,1));
+    set('d_ir_'+k, fmt(dm.ir,1));
+    set('d_rev_'+k, fmt(dm.revenue,1));
+    COMP_GROUPS.forEach(g=>{
+      let done=0,total=0;
+      g.items.forEach(it=>{ const c=dashCompCount(it.key,k); done+=c.done; total+=c.total;
+        set('d_c_'+it.key+'_'+k, c.total?c.done+'/'+c.total:'-'); });
+      set('d_cg_'+g.key+'_'+k, total?done+'/'+total:'-');
+    });
+  });
+  // KPI
+  const d=dashMonth(cur);
+  kpiSet('d_k_hold', fmt(d.holdingValue,0), null, 'Tháng '+cur.slice(5)+'/'+cur.slice(0,4)+' · '+fmt(d.holding)+' TP · triệu đồng');
+  kpiSet('d_k_lim', d.limit===null?'–':fmt(d.limit), null, d.equity===null?'Chưa nhập VCSH':'VCSH '+fmt(d.equity));
+  kpiSet('d_k_rem', d.remaining===null?'–':fmt(d.remaining), d.remaining!==null&&d.remaining<0?'bad':'good');
+  kpiSet('d_k_use', d.usage===null?'–':fmtPct(d.usage*100), d.usage===null?'':(d.usage>1?'bad':d.usage>=0.9?'warn':'good'));
+  kpiSet('d_k_rev', fmt(d.revenue,1));
+  kpiSet('d_k_fee', fmt(d.feeTotal,1));
+  kpiSet('d_k_cpn', fmt(d.couponRev,1));
+  kpiSet('d_k_ir', fmt(d.ir,1));
+  clearTimeout(_chartTimer); _chartTimer=setTimeout(drawDashCharts, 220);
+}
+function set(id,txt,cls){
+  const e=document.getElementById(id); if(!e) return;
+  e.textContent=txt; if(cls!==undefined&&cls!==null) e.className=cls;
+}
+function kpiSet(id,val,cls,meta){
+  const e=document.getElementById(id); if(!e) return;
+  const v=e.querySelector('.v'); if(v) v.textContent=val;
+  if(cls!==undefined&&cls!==null) e.className='kpi '+cls;
+  if(meta!==undefined&&meta!==null){ const m=e.querySelector('.m'); if(m) m.textContent=meta; }
+}
+/* =========================================================================
+   11. TAB TRÁI PHIẾU
+   ========================================================================= */
+function rateTypeOptions(sel){
+  const opts=[['fixed','LS cố định'],['floating','LS thả nổi'],['combined','LS kết hợp'],['conditional','LS kết hợp có điều kiện']];
+  return opts.map(o=>'<option value="'+o[0]+'"'+(sel===o[0]?' selected':'')+'>'+o[1]+'</option>').join('');
+}
+function refOptions(sel){
+  let h='<option value="">— Chọn benchmark —</option>';
+  S.refRates.forEach(r=>{ h+='<option value="'+r.id+'"'+(sel===r.id?' selected':'')+'>'+esc(r.name)+'</option>'; });
+  return h;
+}
+function fieldNum(label,dataset,value,dec,suffix){
+  let attrs=''; for(const k in dataset) attrs+=' data-'+k+'="'+esc(dataset[k])+'"';
+  const v=fmtInput(value);
+  return '<div class="field"><label>'+esc(label)+'</label><input class="numf" type="text" value="'+esc(v)+'"'+attrs+
+         ' data-numinput="1" data-dec="'+dec+'"></div>';
+}
+function viewBond(b){
+  const months=visibleMonths();
+  const st=bondStatus(b);
+  const cur=curYM();
+  let h='<div><button class="backlink" data-act="go" data-view="dashboard">← BACK TO DASHBOARD</button></div>'+
+   '<div class="bondhead"><h1>'+esc(b.code)+'</h1><span class="tag '+st.k+'">'+st.t+'</span>'+
+   '<span class="hint">'+(b.info.issueDate?fmtDate(b.info.issueDate):'–')+' → '+(b.info.maturityDate?fmtDate(b.info.maturityDate):'–')+'</span>'+
+   '<span class="spacer" style="flex:1"></span>'+
+   '<button class="btn sm" data-act="renameBond" data-bond="'+b.id+'">Đổi mã</button> '+
+   '<button class="btn sm danger" data-act="deleteBond" data-bond="'+b.id+'">Xóa trái phiếu</button></div>';
+
+  /* ---- Thông tin cơ bản + cấu trúc lãi suất ---- */
+  let info='<div class="infogrid">';
+  info+='<div class="field"><label>Ngày phát hành</label><input type="date" data-bi="issueDate" value="'+esc(b.info.issueDate||'')+'"></div>';
+  info+='<div class="field"><label>Ngày đáo hạn</label><input type="date" data-bi="maturityDate" value="'+esc(b.info.maturityDate||'')+'"></div>';
+  info+='<div class="field"><label>Ngày đầu tiên thu phí định kỳ</label><input type="date" data-bi="firstFeeDate" value="'+esc(b.info.firstFeeDate||'')+'"></div>';
+  info+=fieldNum('Trả lãi (tháng/lần)',{bi:'payFreq'},b.info.payFreq,0);
+  info+='<div class="field"><label>XHTN</label><input type="text" data-bi="xhtn" value="'+esc(b.info.xhtn||'')+'"></div>';
+  info+=fieldNum('Mệnh giá (trđ)',{bi:'parValue'},b.info.parValue,2);
+  info+='</div>';
+  const dErr=(()=>{ const i=parseISO(b.info.issueDate),m=parseISO(b.info.maturityDate);
+    return (i&&m&&m<i)?'<div class="alert d" style="margin-top:10px"><div><div class="t">Ngày đáo hạn phải ≥ ngày phát hành</div></div></div>':''; })();
+  info+=dErr;
+
+  /* cấu trúc lãi suất — input đổi động theo loại */
+  let r='<div class="infogrid">';
+  r+='<div class="field"><label>Loại lãi suất</label><select data-br="type">'+rateTypeOptions(b.rate.type)+'</select></div>';
+  if(b.rate.type==='fixed'){
+    r+=fieldNum('Lãi suất các kỳ (%)',{br:'fixed'},b.rate.fixed,2);
+  }else{
+    if(b.rate.type!=='floating') r+=fieldNum('Lãi suất 4 kỳ đầu (%)',{br:'first4'},b.rate.first4,2);
+    r+=fieldNum('Biên độ (%)',{br:'spread'},b.rate.spread,2);
+    r+='<div class="field"><label>Lãi suất tham chiếu</label><select data-br="refId">'+refOptions(b.rate.refId)+'</select></div>';
+    if(b.rate.type==='conditional'){
+      r+=fieldNum('Không dưới — Floor (%)',{br:'floor'},b.rate.floor,2);
+      r+=fieldNum('Không quá — Cap (%)',{br:'cap'},b.rate.cap,2);
+    }
+  }
+  r+='</div>';
+  const fl=b.rate.floor, cp=b.rate.cap;
+  if(b.rate.type==='conditional' && fl!==null && cp!==null && fl!=='' && cp!=='' && Number(fl)>Number(cp))
+    r+='<div class="alert d" style="margin-top:10px"><div><div class="t">Không dưới &gt; Không quá</div><div class="s">Floor phải nhỏ hơn hoặc bằng Cap.</div></div></div>';
+  if(b.rate.type!=='fixed' && !b.rate.refId)
+    r+='<div class="alert w" style="margin-top:10px"><div><div class="t">Chưa chọn lãi suất tham chiếu</div><div class="s">Coupon các kỳ thả nổi sẽ để trống cho tới khi chọn benchmark ở tab Control.</div></div></div>';
+  r+='<div class="hint" style="margin-top:10px">'+rateExplain(b)+'</div>';
+
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start">'+
+     panel('pnl_b_info','Thông tin cơ bản', info)+
+     panel('pnl_b_rate','Cấu trúc lãi suất', r)+
+     '</div>';
+
+  /* ---- Cấu hình phí ---- */
+  let fee='<table class="grid" style="width:100%"><thead><tr class="r1">'+
+    '<th style="text-align:left">Loại phí</th><th>Mức phí (%)</th><th>Lịch thay đổi</th><th>Cách tính</th><th>Kỳ thu (tháng/lần)</th><th>Thời điểm thu</th><th>Tháng ghi nhận</th><th style="text-align:left">Cơ sở tính</th></tr></thead><tbody>';
+  FEE_DEFS.forEach((def,i)=>{
+    const f=b.fees.find(x=>x.key===def.key);
+    const methodSel='<select class="cell" data-bf="method" data-fee="'+def.key+'">'+
+      def.methods.map(m=>'<option value="'+m+'"'+(f.method===m?' selected':'')+'>'+FEE_METHOD_LABEL[m]+'</option>').join('')+'</select>';
+    const recog = f.method==='once'
+      ? '<select class="cell" data-bf="recogMonth" data-fee="'+def.key+'"><option value="">— chưa chọn —</option>'+
+        allMonths().map(k=>'<option value="'+k+'"'+(f.recogMonth===k?' selected':'')+'>'+MONTH_SHORT[ymParse(k).m-1]+'/'+ymParse(k).y+'</option>').join('')+'</select>'
+      : '<span class="hint">theo kỳ</span>';
+    const n=(f.schedule||[]).length;
+    const schedBtn='<button class="btn sm'+(n?' primary':'')+'" data-act="feeSchedule" data-fee="'+def.key+'" '+
+      'title="Mức phí có thể đổi trong kỳ — bấm để đặt các mốc hiệu lực">'+(n?(n+' mốc'):'+ mốc')+'</button>';
+    fee+='<tr><td style="text-align:left">'+(i+1<7?('2.'+(i+1)+' '):'')+esc(def.name)+'</td>'+
+      '<td>'+cellInput({bf:'rate',fee:def.key},f.rate,{dec:4})+'</td>'+
+      '<td>'+schedBtn+'</td>'+
+      '<td>'+methodSel+'</td>'+
+      '<td>'+(f.method==='once' ? '<span class="hint">—</span>'
+             : cellInput({bf:'freq',fee:def.key}, f.freq||1, {dec:0, title:'Số tháng cho mỗi kỳ thu phí. 1 = thu hàng tháng, 3 = thu theo quý.'}))+'</td>'+
+      '<td>'+(f.method==='once' ? '<span class="hint">—</span>'
+             : '<select class="cell" data-bf="timing" data-fee="'+def.key+'" title="Ghi nhận doanh thu vào tháng đầu hay tháng cuối của kỳ thu">'+
+               '<option value="end"'+(f.timing!=='begin'?' selected':'')+'>Cuối kỳ</option>'+
+               '<option value="begin"'+(f.timing==='begin'?' selected':'')+'>Đầu kỳ</option></select>')+'</td>'+
+      '<td>'+recog+'</td>'+
+      '<td style="text-align:left" class="hint">'+esc(def.basis)+'</td></tr>';
+  });
+  const periodic=b.fees.filter(f=>f.method!=='once' && num(f.rate)!==0);
+  const noAnchor = periodic.length && !b.info.firstFeeDate;
+  const totalFeePct=b.fees.reduce((a,f)=>a+num(f.rate),0);
+  fee+='<tr class="total"><td style="text-align:left">Tổng mức phí dịch vụ (mức gốc)</td><td>'+fmtPct(totalFeePct,2)+'</td><td colspan="6"></td></tr>';
+  fee+='</tbody></table>';
+  if(noAnchor) fee+='<div class="alert w" style="margin-top:10px"><div><div class="t">Chưa nhập “Ngày đầu tiên thu phí định kỳ”</div>'+
+    '<div class="s">Đang tạm lấy ngày phát hành '+(b.info.issueDate?fmtDate(b.info.issueDate):'(cũng chưa có)')+
+    ' làm mốc chia kỳ thu. Nhập ngày mốc để số liệu đúng.</div></div></div>';
+  if(periodic.some(f=>num(f.freq)>1)) fee+='<div class="alert i" style="margin-top:10px"><div>'+
+    '<div class="t">Phí có kỳ thu nhiều tháng</div>'+
+    '<div class="s">Doanh thu chỉ ghi nhận vào tháng cuối mỗi kỳ. Trong bảng theo tháng, ô có gạch chân là tháng ghi nhận, '+
+    'ô mờ là tháng còn lại trong kỳ. “Đầu kỳ” ghi nhận ở tháng mở đầu kỳ, “Cuối kỳ” ghi nhận ở tháng khép kỳ; '+
+    'số ngày dùng để tính Actual luôn là số ngày của trọn kỳ.</div></div></div>';
+  h+=panel('pnl_b_fee','Phí dịch vụ', fee, 'Mức phí gốc áp dụng từ đầu kỳ · “Lịch thay đổi” đặt mức mới theo mốc · “Kỳ thu” quyết định tháng nào ghi nhận doanh thu');
+
+  /* ---- Bảng theo tháng ---- */
+  h+=timelineToolbar();
+  let t='<div class="tblwrap"><table class="grid">'+monthHeader(UI.collapsedYears,{toggleYear:'toggleYear'})+'<tbody>';
+
+  /* nhóm KHỐI LƯỢNG */
+  t+=grpRow('vol','1. KHỐI LƯỢNG (số lượng trái phiếu)',months.length);
+  t+=inputRow(b,'vol','1.1','Khối lượng tư vấn','advised',months,false);
+  t+=inputRow(b,'vol','','TCPH mua lại','buyback',months,true);
+  t+=calcRow('vol','','Khối lượng lưu hành',months,k=>{const m=computeBondMonth(b,k);return {v:m.outstanding,id:'b_out_'+k,active:m.active};},'Khối lượng tư vấn + TCPH mua lại');
+  t+=inputRow(b,'vol','1.2','Khối lượng đầu tư','invested',months,false);
+  t+=inputRow(b,'vol','','Khối lượng bán ra','sold',months,true);
+  t+=calcRow('vol','','Khối lượng nắm giữ',months,k=>{const m=computeBondMonth(b,k);return {v:m.holding,id:'b_hold_'+k,active:m.active};},'Khối lượng đầu tư + Khối lượng bán ra');
+
+  /* nhóm LÃI SUẤT */
+  t+=grpRow('rate','2. LÃI SUẤT',months.length);
+  t+='<tr class="g-rate"><td class="s1">2.1</td><td class="s2">Lãi suất Coupon (%)</td>'+
+     months.map(k=>{ const m=computeBondMonth(b,k);
+        return '<td class="'+(m.active?(m.coupon===null?'missing':'calc'):'inactive')+'" id="b_cpn_'+k+'"'+
+          (m.coupon===null&&m.active?' title="Chưa đủ dữ liệu để tính coupon"':'')+'>'+
+          (m.active?fmtPct(m.coupon,2):'')+'</td>'; }).join('')+'</tr>';
+  t+='<tr class="g-rate"><td class="s1"></td><td class="s2 lvl2">LS tham chiếu (%)</td>'+
+     months.map(k=>{ const v=b.rate.refId?refValue(b.rate.refId,k):null;
+        return '<td class="'+(v===null?'missing':'calc')+'" id="b_ref_'+k+'"'+(v===null?' title="Chưa cập nhật lãi suất tham chiếu"':'')+'>'+
+          (v===null?'–':fmtPct(v,2))+'</td>'; }).join('')+'</tr>';
+  t+='<tr class="g-rate"><td class="s1"></td><td class="s2 lvl2">Kỳ trả lãi</td>'+
+     months.map(k=>{ const p=couponPeriod(b,k); const m=computeBondMonth(b,k);
+        return '<td class="'+(m.active?'calc':'inactive')+'">'+(m.active&&p?('Kỳ '+p):'')+'</td>'; }).join('')+'</tr>';
+
+  /* nhóm PHÍ */
+  t+=grpRow('fee','3. DOANH THU TỪ PHÍ (triệu đồng)',months.length);
+  FEE_DEFS.forEach((def,i)=>{
+    const f=b.fees.find(x=>x.key===def.key);
+    const sched=feeHasSchedule(f);
+    const freqLbl = f.method==='once' ? 'thu một lần'
+                  : ((f.freq||1)>1 ? (f.freq+' th./lần, '+(f.timing==='begin'?'đầu kỳ':'cuối kỳ')) : 'hàng tháng');
+    t+='<tr class="g-fee"><td class="s1">3.'+(i+1)+'</td><td class="s2 lvl2" title="'+esc(def.basis)+'">'+esc(def.name)+
+       ' <span class="hint">'+(sched?'theo lịch':fmtPct(num(f.rate),2))+' · '+freqLbl+'</span></td>'+
+       months.map(k=>{ const m=computeBondMonth(b,k);
+          const isEnd = f.method!=='once' && m.active && !!m.feeDays[def.key];
+          const cls = f.method==='once' ? 'calc' : (m.active ? (isEnd?'calc feeend':'calc feemid') : 'inactive');
+          return '<td class="'+cls+'" id="b_fee_'+def.key+'_'+k+'" title="'+esc(feeCellTip(m,def.key))+'">'+fmt(m.fees[def.key],1)+'</td>'; }).join('')+'</tr>';
+    /* chỉ hiện dòng % khi mức phí có thay đổi trong kỳ */
+    if(sched){
+      t+='<tr class="g-fee"><td class="s1"></td><td class="s2 lvl3">% phí áp dụng</td>'+
+        months.map(k=>{ const m=computeBondMonth(b,k);
+          return '<td class="calc" id="b_feer_'+def.key+'_'+k+'" style="font-style:italic">'+fmtPct(m.feeRates[def.key],4)+'</td>'; }).join('')+'</tr>';
+    }
+  });
+  t+='<tr class="total g-fee"><td class="s1">(1)</td><td class="s2">Doanh thu từ Phí</td>'+
+     months.map(k=>{const m=computeBondMonth(b,k); return '<td id="b_fee1_'+k+'">'+fmt(m.feeTotal,1)+'</td>';}).join('')+'</tr>';
+
+  /* nhóm DOANH THU COUPON */
+  t+=grpRow('rev','4. DOANH THU LÃI COUPON NẮM GIỮ (triệu đồng)',months.length);
+  t+='<tr class="g-rev"><td class="s1"></td><td class="s2 lvl2">Ngày bắt đầu</td>'+
+     months.map(k=>{const m=computeBondMonth(b,k);
+        return '<td class="'+(m.active?'':'inactive')+'"><input class="cell" type="date" data-bd="startDate" data-k="'+k+'" value="'+esc(m.holdStart)+'"></td>';}).join('')+'</tr>';
+  t+='<tr class="g-rev"><td class="s1"></td><td class="s2 lvl2">Ngày kết thúc</td>'+
+     months.map(k=>{const m=computeBondMonth(b,k);
+        return '<td class="'+(m.active?'':'inactive')+'"><input class="cell" type="date" data-bd="endDate" data-k="'+k+'" value="'+esc(m.holdEnd)+'"></td>';}).join('')+'</tr>';
+  t+='<tr class="g-rev"><td class="s1"></td><td class="s2 lvl2">Số ngày nắm giữ</td>'+
+     months.map(k=>{const m=computeBondMonth(b,k);
+        return '<td class="'+(m.holdErr?'missing':(m.active?'calc':'inactive'))+'" id="b_days_'+k+'"'+(m.holdErr?' title="Ngày bắt đầu > ngày kết thúc"':'')+'>'+
+          (m.holdErr?'Lỗi':(m.active?fmt(m.holdDays):''))+'</td>';}).join('')+'</tr>';
+  t+='<tr class="total g-rev"><td class="s1">(2)</td><td class="s2">Doanh thu từ Lãi coupon nắm giữ</td>'+
+     months.map(k=>{const m=computeBondMonth(b,k); return '<td id="b_cprev_'+k+'">'+fmt(m.couponRev,1)+'</td>';}).join('')+'</tr>';
+  t+='<tr class="grand g-rev"><td class="s1">(3)</td><td class="s2">Doanh thu (3) = (1) + (2)</td>'+
+     months.map(k=>{const m=computeBondMonth(b,k); return '<td id="b_rev_'+k+'">'+fmt(m.total,1)+'</td>';}).join('')+'</tr>';
+
+  /* nhóm SAU ĐẦU TƯ */
+  t+=grpRow('comp','5. SAU ĐẦU TƯ',months.length);
+  t+='<tr class="total g-comp"><td class="s1"></td><td class="s2">Sau đầu tư — hoàn thành / tổng</td>'+
+     months.map(k=>{const c=bondCompTotal(b,k); return '<td id="b_compt_'+k+'">'+(c.total?c.done+'/'+c.total:'-')+'</td>';}).join('')+'</tr>';
+  COMP_GROUPS.forEach((g,gi)=>{
+    t+='<tr class="sub g-comp"><td class="s1">5.'+(gi+1)+'</td><td class="s2">'+esc(g.name)+'</td>'+
+       months.map(k=>{ let done=0,total=0; g.items.forEach(it=>{const c=compCount(b,it.key,k);done+=c.done;total+=c.total;});
+        return '<td id="b_compg_'+g.key+'_'+k+'">'+(total?done+'/'+total:'-')+'</td>';}).join('')+'</tr>';
+    g.items.forEach(it=>{
+      t+='<tr class="g-comp"><td class="s1"></td><td class="s2 lvl2">'+esc(it.name)+'</td>'+
+        months.map(k=>{const c=compCount(b,it.key,k);
+          return '<td class="compcell '+compCls(c)+'" id="b_comp_'+it.key+'_'+k+'" data-act="editComp" data-item="'+it.key+'" data-k="'+k+'" title="Bấm để quản lý checklist tháng này">'+
+            (c.total?c.done+'/'+c.total:'+')+'</td>';}).join('')+'</tr>';
+    });
+  });
+  t+='</tbody></table></div>';
+  h+=panel('pnl_b_tbl','Bảng quản lý theo tháng — '+esc(b.code), t, 'Ô nền xám là ô công thức · Bấm tiêu đề nhóm để thu gọn', true);
+  h+='<div class="toolbar"><button class="btn sm" data-act="exportCsvBond" data-bond="'+b.id+'">Xuất Excel (CSV) — '+esc(b.code)+'</button></div>';
+  return h;
+}
+/* Chú thích ô doanh thu phí: mức phí và số ngày của kỳ thu kết thúc tại tháng đó */
+function feeCellTip(m,key){
+  const p=m.feePeriods && m.feePeriods[key];
+  if(p){
+    const range='Kỳ thu '+fmtDate(toISO(p.start))+' → '+fmtDate(toISO(p.end))+' ('+p.days+' ngày)';
+    return 'Tháng ghi nhận ('+(p.timing==='begin'?'thu đầu kỳ':'thu cuối kỳ')+') · Mức phí: '+fmtPct(m.feeRates[key],4)+' · '+range;
+  }
+  return 'Tháng không ghi nhận (nằm trong kỳ thu) · Mức phí hiện hành: '+fmtPct(m.feeRates[key],4);
+}
+function compCls(c){ if(!c.total) return ''; return c.done===c.total?'full':'part'; }
+function grpRow(g,label,span){
+  return '<tr class="section" data-act="toggleGroup" data-group="'+g+'" style="cursor:pointer">'+
+    '<td class="s1">'+(UI.collapsedPanels['g_'+g]?'▸':'▾')+'</td><td class="s2">'+esc(label)+'</td>'+
+    new Array(span).fill('<td></td>').join('')+'</tr>';
+}
+function inputRow(b,grp,stt,label,field,months,allowNeg){
+  return '<tr class="g-'+grp+'"><td class="s1">'+esc(stt)+'</td><td class="s2'+(stt?'':' lvl2')+'">'+esc(label)+'</td>'+
+    months.map(k=>{
+      const m=b.months[k]||{};
+      const v=m[field];
+      const neg = (v!==undefined&&v!==null&&Number(v)<0);
+      const act = bondActiveMonth(b,k);
+      return '<td class="'+(act?'':'inactive')+(k===curYM()?' cur':'')+'">'+
+        cellInput({bm:field,k:k},v,{dec:0,cls:neg?'neg':''})+'</td>';
+    }).join('')+'</tr>';
+}
+function calcRow(grp,stt,label,months,fn,tip){
+  return '<tr class="g-'+grp+'"><td class="s1">'+esc(stt)+'</td><td class="s2'+(stt?'':' lvl2')+'"'+(tip?' title="'+esc(tip)+'"':'')+'>'+esc(label)+'</td>'+
+    months.map(k=>{ const r=fn(k);
+      return '<td class="'+(r.active===false?'inactive':(r.v!==null&&r.v<0?'calc neg':'calc'))+'" id="'+r.id+'"'+(tip?' title="'+esc(tip)+'"':'')+'>'+fmt(r.v)+'</td>';
+    }).join('')+'</tr>';
+}
+function rateExplain(b){
+  switch(b.rate.type){
+    case 'fixed': return 'Coupon tất cả các kỳ = Lãi suất các kỳ.';
+    case 'floating': return 'Coupon = Biên độ + LS tham chiếu của tháng tương ứng.';
+    case 'combined': return '4 kỳ trả lãi đầu dùng lãi suất cố định (căn cứ ngày phát hành và số tháng/lần trả lãi). Từ kỳ thứ 5: Coupon = Biên độ + LS tham chiếu.';
+    case 'conditional': return '4 kỳ đầu dùng lãi suất cố định. Từ kỳ 5: Coupon = MAX(Không dưới; MIN(Biên độ + LS tham chiếu; Không quá)).';
+  }
+  return '';
+}
+/* Cập nhật ô công thức của tab trái phiếu (không dựng lại DOM) */
+function refreshBond(b){
+  invalidateCalc();
+  visibleMonths().forEach(k=>{
+    const m=computeBondMonth(b,k);
+    set('b_out_'+k, fmt(m.outstanding), m.active?(m.outstanding!==null&&m.outstanding<0?'calc neg':'calc'):'inactive');
+    set('b_hold_'+k, fmt(m.holding), m.active?(m.holding!==null&&m.holding<0?'calc neg':'calc'):'inactive');
+    set('b_cpn_'+k, m.active?fmtPct(m.coupon,2):'', m.active?(m.coupon===null?'missing':'calc'):'inactive');
+    const rv=b.rate.refId?refValue(b.rate.refId,k):null;
+    set('b_ref_'+k, rv===null?'–':fmtPct(rv,2), rv===null?'missing':'calc');
+    FEE_DEFS.forEach(f=>{
+      const fEl=document.getElementById('b_fee_'+f.key+'_'+k);
+      if(fEl){
+        const cfg=b.fees.find(x=>x.key===f.key)||{};
+        fEl.textContent=fmt(m.fees[f.key],1);
+        fEl.title=feeCellTip(m,f.key);
+        fEl.className = cfg.method==='once' ? 'calc'
+          : (m.active ? (m.feeDays[f.key]?'calc feeend':'calc feemid') : 'inactive');
+      }
+      const rEl=document.getElementById('b_feer_'+f.key+'_'+k);
+      if(rEl) rEl.textContent=fmtPct(m.feeRates[f.key],4);
+    });
+    set('b_fee1_'+k, fmt(m.feeTotal,1));
+    set('b_days_'+k, m.holdErr?'Lỗi':(m.active?fmt(m.holdDays):''), m.holdErr?'missing':(m.active?'calc':'inactive'));
+    set('b_cprev_'+k, fmt(m.couponRev,1));
+    set('b_rev_'+k, fmt(m.total,1));
+    const ct=bondCompTotal(b,k);
+    set('b_compt_'+k, ct.total?ct.done+'/'+ct.total:'-');
+    COMP_GROUPS.forEach(g=>{
+      let done=0,total=0;
+      g.items.forEach(it=>{ const c=compCount(b,it.key,k); done+=c.done; total+=c.total;
+        const el=document.getElementById('b_comp_'+it.key+'_'+k);
+        if(el){ el.textContent=c.total?c.done+'/'+c.total:'+'; el.className='compcell '+compCls(c); }
+      });
+      set('b_compg_'+g.key+'_'+k, total?done+'/'+total:'-');
+    });
+  });
+}
+/* Modal: lịch thay đổi mức phí trong kỳ của một loại phí */
+function openFeeScheduleModal(b, feeKey){
+  const def=FEE_DEFS.find(d=>d.key===feeKey);
+  const f=b.fees.find(x=>x.key===feeKey);
+  f.schedule=f.schedule||[];
+  const monthOpts=(sel)=>allMonths().map(k=>'<option value="'+k+'"'+(sel===k?' selected':'')+'>'+
+      MONTH_SHORT[ymParse(k).m-1]+'/'+ymParse(k).y+'</option>').join('');
+  const render=()=>{
+    let h='<div class="field"><label>Mức phí gốc (%)</label><input class="numf" type="text" id="fs_base" value="'+
+      esc(fmtInput(f.rate))+'"><\/div>'+
+      '<div class="hint" style="margin:2px 0 12px">Mức gốc áp dụng từ đầu kỳ. Mỗi mốc bên dưới đặt một mức mới '+
+      '<b>có hiệu lực từ tháng đó trở đi</b> và giữ nguyên cho tới mốc kế tiếp.<\/div>'+
+      '<div class="cklist" id="fsList">';
+    const list=(f.schedule||[]).slice().sort((a,b2)=>ymDiff(b2.from,a.from));
+    if(!list.length) h+='<div class="empty">Chưa có mốc thay đổi — mức phí giữ nguyên suốt kỳ hạn.<\/div>';
+    list.forEach((sc,i)=>{
+      h+='<div class="ckrow"><span class="hint" style="min-width:74px">Từ tháng<\/span>'+
+        '<select data-fs="from" data-i="'+i+'" style="flex:0 0 130px;padding:3px 5px">'+monthOpts(sc.from)+'<\/select>'+
+        '<span class="hint">mức<\/span>'+
+        '<input type="text" data-fs="rate" data-i="'+i+'" value="'+esc(fmtInput(sc.rate))+'" style="max-width:110px;text-align:right">'+
+        '<span class="hint">%<\/span>'+
+        '<button class="btn sm danger" data-fs="del" data-i="'+i+'">✕<\/button><\/div>';
+    });
+    h+='<\/div><div style="margin-top:10px"><button class="btn" data-fs="add">+ Thêm mốc thay đổi<\/button><\/div>';
+    /* xem trước hiệu lực theo tháng */
+    const ms=allMonths(); const seg=[]; let last=null;
+    ms.forEach(k=>{ const r=feeRateAt(f,k); if(last===null||r!==last){ seg.push({from:k,rate:r}); last=r; } });
+    h+='<div class="hint" style="margin-top:12px">Hiệu lực: '+seg.map(x=>
+       fmtPct(x.rate,4)+' từ '+MONTH_SHORT[ymParse(x.from).m-1]+'/'+ymParse(x.from).y).join('  →  ')+'<\/div>';
+    return h;
+  };
+  const sorted=()=>f.schedule.slice().sort((a,b2)=>ymDiff(b2.from,a.from));
+  openModal({
+    title:'Lịch mức phí — '+def.name+' ('+b.code+')',
+    body:render(), okText:null, cancelText:'Đóng', wide:true,
+    onOpen:(box)=>{
+      const redraw=()=>{ box.querySelector('.mbody').innerHTML=render(); };
+      box.addEventListener('click', e=>{
+        const t=e.target.closest('[data-fs]'); if(!t) return;
+        if(t.dataset.fs==='add'){
+          const used={}; f.schedule.forEach(x=>used[x.from]=1);
+          const next=allMonths().find(k=>!used[k]) || allMonths()[0];
+          f.schedule.push({id:uid('fs'), from:next, rate:num(f.rate)});
+        }else if(t.dataset.fs==='del'){
+          const target=sorted()[+t.dataset.i];
+          f.schedule=f.schedule.filter(x=>x!==target);
+        }else return;
+        saveData(); redraw(); refreshBond(b);
+      });
+      box.addEventListener('change', e=>{
+        const t=e.target.closest('[data-fs]'); if(!t) return;
+        const target=sorted()[+t.dataset.i];
+        if(t.dataset.fs==='from' && target){ target.from=t.value; saveData(); redraw(); refreshBond(b); }
+      });
+      box.addEventListener('input', e=>{
+        const t=e.target.closest('[data-fs]'); if(!t) return;
+        if(t.dataset.fs==='rate'){
+          const target=sorted()[+t.dataset.i];
+          if(target){ const v=parseNum(t.value); target.rate = v===null?0:v; invalidateCalc(); saveData(); refreshBond(b); }
+        }
+        if(t.id==='fs_base'){ const v=parseNum(t.value); f.rate = v===null?0:v; invalidateCalc(); saveData(); refreshBond(b); }
+      });
+    },
+    onClose:()=>render()
+  });
+}
+
+/* Dọn các dòng checklist bị nhân bản do lỗi listener cộng dồn ở bản trước:
+   trong cùng một ô, các dòng CHƯA hoàn thành, cùng nội dung và không có ghi chú
+   chỉ giữ lại một dòng. Dòng đã tick hoặc có ghi chú luôn được giữ nguyên. */
+function dedupeCompliance(){
+  let removed=0;
+  S.bonds.forEach(b=>{
+    Object.keys(b.compliance||{}).forEach(itemKey=>{
+      const byMonth=b.compliance[itemKey];
+      Object.keys(byMonth).forEach(k=>{
+        const arr=byMonth[k]||[];
+        if(arr.length<2) return;
+        /* Chỉ gộp khi CẢ Ô là các dòng y hệt nhau, chưa tick, không ghi chú —
+           đúng dấu vết của lỗi bấm một lần thêm nhiều dòng. Mọi trường hợp
+           khác giữ nguyên để không xóa nhầm dữ liệu bạn nhập. */
+        const t=arr[0].text||'';
+        const isBugPattern = arr.every(it=>!it.done && !it.note && (it.text||'')===t);
+        if(!isBugPattern) return;
+        removed += arr.length-1;
+        byMonth[k]=[arr[0]];
+      });
+    });
+  });
+  return removed;
+}
+
+/* Modal checklist sau đầu tư */
+function openCompModal(b,itemKey,k){
+  const item=(()=>{ let f=null; COMP_GROUPS.forEach(g=>g.items.forEach(i=>{ if(i.key===itemKey) f=i; })); return f; })();
+  const render=()=>{
+    const arr=compList(b,itemKey,k);
+    let body='<div class="hint" style="margin-bottom:8px">'+esc(b.code)+' · tháng '+ymParse(k).m+'/'+ymParse(k).y+'</div><div class="cklist" id="ckList">';
+    if(!arr.length) body+='<div class="empty">Chưa có đầu việc. Thêm đầu việc đầu tiên bên dưới.</div>';
+    arr.forEach((it,i)=>{
+      body+='<div class="ckrow'+(it.done?' done':'')+'">'+
+        '<input type="checkbox" class="chk" data-ck="done" data-i="'+i+'"'+(it.done?' checked':'')+'>'+
+        '<input type="text" data-ck="text" data-i="'+i+'" value="'+esc(it.text)+'" placeholder="Mô tả công việc">'+
+        '<input type="text" data-ck="note" data-i="'+i+'" value="'+esc(it.note||'')+'" placeholder="Ghi chú" style="max-width:150px">'+
+        '<button class="btn sm danger" data-ck="del" data-i="'+i+'">✕</button></div>';
+    });
+    body+='</div><div style="margin-top:10px"><button class="btn" data-ck="add">+ Thêm đầu việc</button></div>';
+    return body;
+  };
+  const bind=(box)=>{
+    box.querySelector('.mbody').innerHTML=render();
+  };
+  openModal({
+    title:'Sau đầu tư — '+(item?item.name:itemKey),
+    body: render(), okText:null, cancelText:'Đóng',
+    onOpen:(box)=>{
+      box.addEventListener('click', e=>{
+        const t=e.target.closest('[data-ck]'); if(!t) return;
+        const arr=compList(b,itemKey,k);
+        if(t.dataset.ck==='add'){ arr.push({id:uid('ck'), text:(item?item.name:'Đầu việc'), done:false, note:''}); }
+        else if(t.dataset.ck==='del'){ arr.splice(+t.dataset.i,1); }
+        else if(t.dataset.ck==='done'){ arr[+t.dataset.i].done=t.checked; }
+        else return;
+        saveData(); bind(box); refreshBond(b);
+      });
+      box.addEventListener('input', e=>{
+        const t=e.target.closest('[data-ck]'); if(!t) return;
+        const arr=compList(b,itemKey,k);
+        if(t.dataset.ck==='text') arr[+t.dataset.i].text=t.value;
+        if(t.dataset.ck==='note') arr[+t.dataset.i].note=t.value;
+        saveData();
+      });
+    }
+  });
+}
+/* =========================================================================
+   12. TAB CONTROL — LÃI SUẤT THAM CHIẾU
+   ========================================================================= */
+function rateReminder(){
+  const t=new Date(); const y=t.getFullYear(), m=t.getMonth()+1;
+  const last=daysInMonth(y,m);
+  const start=new Date(y,m-1,last-6);           // tuần cuối của tháng
+  const days=dayDiff(t,start);
+  if(days<=0) return {due:true, text:'Đến kỳ cập nhật lãi suất', sub:'Tuần cuối tháng '+m+'/'+y+' — hạn cuối '+pad2(last)+'/'+pad2(m)+'/'+y, n:0};
+  return {due:false, text:'Còn '+days+' ngày đến kỳ cập nhật lãi suất', sub:'Kỳ cập nhật bắt đầu '+pad2(last-6)+'/'+pad2(m)+'/'+y, n:days};
+}
+function viewControl(){
+  const months=visibleMonths(); const cur=curYM();
+  const rem=rateReminder();
+  let h='<div class="reminder'+(rem.due?' due':'')+'"><div class="big">'+(rem.due?'!':rem.n)+'</div>'+
+    '<div><div style="font-weight:650">'+esc(rem.text)+'</div><div class="hint">'+esc(rem.sub)+'</div></div></div>';
+  h+='<div class="toolbar"><button class="btn primary" data-act="addRate">+ Thêm lãi suất tham chiếu</button>'+
+     '<button class="btn sm" data-act="tlPrev">« Thêm tháng trước</button>'+
+     '<button class="btn sm" data-act="tlNext">Thêm tháng sau »</button>'+
+     '<button class="btn sm" data-act="tlYear">+ Thêm 12 tháng</button>'+yearChips()+
+     '<span class="spacer"></span><button class="btn sm" data-act="exportCsvControl">Xuất Excel (CSV)</button></div>';
+
+  let t='<div class="tblwrap"><table class="grid">'+monthHeader(UI.collapsedYears,{toggleYear:'toggleYear'})+'<tbody>';
+  t+=row('section','','THEO DÕI LÃI SUẤT (%)',months.length);
+  if(!S.refRates.length){
+    t+='<tr><td class="s1"></td><td class="s2" colspan="'+(months.length+1)+'" style="text-align:left;color:#7a8797">Chưa có benchmark. Bấm “+ Thêm lãi suất tham chiếu”.</td></tr>';
+  }
+  S.refRates.forEach(r=>{
+    const isCalc=r.type==='calc';
+    const label='<td class="s2"><span style="font-weight:'+(isCalc?600:500)+'">'+esc(r.name)+'</span>'+
+      ' <button class="btn sm" data-act="editRate" data-rate="'+r.id+'" title="Sửa">✎</button>'+
+      ' <button class="btn sm danger" data-act="delRate" data-rate="'+r.id+'" title="Xóa">✕</button></td>';
+    t+='<tr><td class="s1">'+(isCalc?'Σ':'')+'</td>'+label+
+      months.map(k=>{
+        if(isCalc){
+          const v=refValue(r.id,k);
+          return '<td class="'+(v===null?'missing':'calc')+'" id="cr_'+r.id+'_'+k+'">'+(v===null?'–':fmtPct(v,2))+'</td>';
+        }
+        const v=r.values[k];
+        const miss=(v===undefined||v===null||v==='');
+        return '<td class="'+(k===cur?'cur':'')+(miss&&k===cur?' missing':'')+'">'+
+          cellInput({rr:r.id,k:k},miss?null:v,{dec:2,title:'Nhập lãi suất %'})+'</td>';
+      }).join('')+'</tr>';
+    if(isCalc){
+      (r.components||[]).forEach(cid=>{
+        const c=refById(cid); if(!c) return;
+        t+='<tr><td class="s1"></td><td class="s2 lvl3">'+esc(c.name)+'</td>'+
+          months.map(k=>{ const v=refValue(cid,k);
+            return '<td class="calc" style="font-style:italic">'+(v===null?'–':fmtPct(v,2))+'</td>';}).join('')+'</tr>';
+      });
+    }
+  });
+  t+='</tbody></table></div>';
+  h+=panel('pnl_ct_tbl','Bảng lãi suất tham chiếu theo tháng', t, 'Ô vàng: tháng hiện tại chưa nhập dữ liệu', true);
+
+  /* chart */
+  const all=allMonths();
+  const from=UI.chartFrom&&all.indexOf(UI.chartFrom)>=0?UI.chartFrom:all[0];
+  const to=UI.chartTo&&all.indexOf(UI.chartTo)>=0?UI.chartTo:all[all.length-1];
+  let ctl='<div class="toolbar"><label class="hint">Từ</label><select class="cell" data-act="chartFrom">'+
+    all.map(k=>'<option value="'+k+'"'+(k===from?' selected':'')+'>'+MONTH_SHORT[ymParse(k).m-1]+'/'+ymParse(k).y+'</option>').join('')+'</select>'+
+    '<label class="hint">đến</label><select class="cell" data-act="chartTo">'+
+    all.map(k=>'<option value="'+k+'"'+(k===to?' selected':'')+'>'+MONTH_SHORT[ymParse(k).m-1]+'/'+ymParse(k).y+'</option>').join('')+'</select></div>';
+  ctl+='<div class="chartbox" id="rateChart"></div>';
+  ctl+='<div class="legend" id="rateLegend">'+S.refRates.map((r,i)=>
+     '<label><input type="checkbox" class="chk" data-act="toggleSeries" data-rate="'+r.id+'"'+(UI.hiddenSeries[r.id]?'':' checked')+'>'+
+     '<span class="sw" style="background:'+SERIES_COLORS[i%SERIES_COLORS.length]+'"></span>'+esc(r.name)+'</label>').join('')+'</div>';
+  h+=panel('pnl_ct_chart','Biểu đồ lãi suất tham chiếu', ctl);
+  return h;
+}
+function afterControl(){ drawRateChart(); }
+function drawRateChart(){
+  const box=document.getElementById('rateChart'); if(!box) return;
+  const all=allMonths();
+  let from=UI.chartFrom&&all.indexOf(UI.chartFrom)>=0?UI.chartFrom:all[0];
+  let to=UI.chartTo&&all.indexOf(UI.chartTo)>=0?UI.chartTo:all[all.length-1];
+  if(ymDiff(from,to)<0){ const x=from; from=to; to=x; }
+  const ms=all.filter(k=>ymDiff(from,k)>=0 && ymDiff(k,to)>=0);
+  const labels=ms.map(k=>MONTH_SHORT[ymParse(k).m-1]+'/'+String(ymParse(k).y).slice(2));
+  const series=[];
+  S.refRates.forEach((r,i)=>{
+    if(UI.hiddenSeries[r.id]) return;
+    series.push({name:r.name, color:SERIES_COLORS[i%SERIES_COLORS.length], data:ms.map(k=>refValue(r.id,k))});
+  });
+  box.innerHTML = series.length? lineChart(labels, series, {unit:'%', dec:2, pct:true})
+    : '<div class="empty">Chọn ít nhất một benchmark để hiển thị biểu đồ.</div>';
+}
+function openRateModal(rate){
+  const isNew=!rate;
+  const r = rate || {id:uid('rate'), name:'', type:'manual', values:{}, components:[], method:'average'};
+  const body=
+    '<div class="field"><label>Tên benchmark</label><input type="text" id="rt_name" value="'+esc(r.name)+'" placeholder="VD: 12M KHCN TPB"></div>'+
+    '<div class="field"><label>Loại</label><select id="rt_type">'+
+      '<option value="manual"'+(r.type==='manual'?' selected':'')+'>Manual Rate — nhập tay từng tháng</option>'+
+      '<option value="calc"'+(r.type==='calc'?' selected':'')+'>Calculated Rate — tính từ benchmark khác</option></select></div>'+
+    '<div id="rt_calc" style="display:'+(r.type==='calc'?'block':'none')+'">'+
+      '<div class="field"><label>Phương pháp</label><select id="rt_method">'+
+        ['average','min','max'].map(m=>'<option value="'+m+'"'+(r.method===m?' selected':'')+'>'+
+          (m==='average'?'Average — trung bình':m==='min'?'Min':'Max')+'</option>').join('')+'</select></div>'+
+      '<div class="field" style="align-items:flex-start"><label>Benchmark thành phần</label><div style="flex:1">'+
+        (S.refRates.filter(x=>x.id!==r.id).length? S.refRates.filter(x=>x.id!==r.id).map(x=>
+          '<label style="display:flex;gap:7px;align-items:center;padding:2px 0"><input type="checkbox" class="chk rtcomp" value="'+x.id+'"'+
+          ((r.components||[]).indexOf(x.id)>=0?' checked':'')+'> '+esc(x.name)+'</label>').join('')
+          : '<span class="hint">Chưa có benchmark nào khác.</span>')+
+      '</div></div>'+
+    '</div>';
+  openModal({
+    title: isNew?'Thêm lãi suất tham chiếu':'Sửa lãi suất tham chiếu',
+    body: body, okText: isNew?'Tạo benchmark':'Lưu',
+    onOpen:(box)=>{
+      box.querySelector('#rt_type').addEventListener('change', e=>{
+        box.querySelector('#rt_calc').style.display = e.target.value==='calc'?'block':'none';
+      });
+    },
+    onOk:(root)=>{
+      const name=root.querySelector('#rt_name').value.trim();
+      if(!name){ toast('Nhập tên benchmark','err'); return false; }
+      const type=root.querySelector('#rt_type').value;
+      r.name=name; r.type=type;
+      if(type==='calc'){
+        const comps=$$('.rtcomp',root).filter(c=>c.checked).map(c=>c.value);
+        for(const c of comps){ if(wouldCycle(r.id,c)){ toast('Không thể tạo phụ thuộc vòng tròn','err'); return false; } }
+        if(!comps.length){ toast('Chọn ít nhất một benchmark thành phần','err'); return false; }
+        r.components=comps; r.method=root.querySelector('#rt_method').value;
+      }
+      if(isNew) S.refRates.push(r);
+      saveData(); render();
+      toast(isNew?('Đã thêm benchmark '+name):'Đã cập nhật benchmark','ok');
+    }
+  });
+}
+
+/* =========================================================================
+   13. TAB SỔ HỢP ĐỒNG
+   ========================================================================= */
+function viewContracts(){
+  let h='<div class="toolbar"><button class="btn primary" data-act="addProject">+ Thêm dự án (cấp I)</button>'+
+        '<span class="spacer"></span><button class="btn sm" data-act="exportCsvContracts">Xuất Excel (CSV)</button></div>';
+  let t='<div class="tblwrap"><table class="grid" style="width:100%"><thead><tr class="r1">'+
+    '<th style="width:64px;min-width:64px">STT</th><th style="width:118px;min-width:118px">Ngày</th>'+
+    '<th style="text-align:left;min-width:280px">Đầu mục Dự án / Tên Hợp đồng</th>'+
+    '<th style="text-align:left;min-width:220px">Số hợp đồng</th>'+
+    '<th style="width:130px;min-width:130px">Tình trạng</th>'+
+    '<th style="text-align:left;min-width:150px">Các bên ký</th>'+
+    '<th style="width:126px;min-width:126px">Thao tác</th></tr></thead><tbody>';
+  if(!S.contracts.length){
+    t+='<tr><td colspan="7" style="text-align:left;padding:18px;color:#7a8797">Chưa có dự án nào. Bấm “+ Thêm dự án (cấp I)” để bắt đầu.</td></tr>';
+  }
+  S.contracts.forEach((p,pi)=>{
+    t+='<tr class="sub"><td style="text-align:center;font-weight:700">'+(ROMAN[pi]||(pi+1))+'.</td><td></td>'+
+      '<td style="text-align:left" colspan="4"><input class="cell txt" type="text" data-pj="name" data-p="'+p.id+'" value="'+esc(p.name)+'" placeholder="Tên khách hàng / trái phiếu / dự án" style="font-weight:700"></td>'+
+      '<td style="text-align:center">'+
+        '<button class="btn sm" data-act="addContract" data-p="'+p.id+'" title="Thêm hợp đồng">+HĐ</button> '+
+        '<button class="btn sm" data-act="moveProject" data-p="'+p.id+'" data-dir="-1" title="Lên">↑</button>'+
+        '<button class="btn sm" data-act="moveProject" data-p="'+p.id+'" data-dir="1" title="Xuống">↓</button> '+
+        '<button class="btn sm danger" data-act="delProject" data-p="'+p.id+'" title="Xóa dự án">✕</button></td></tr>';
+    (p.items||[]).forEach((c,ci)=>{
+      t+='<tr><td style="text-align:center">'+(ci+1)+'</td>'+
+        '<td><input class="cell" type="date" data-ct="date" data-p="'+p.id+'" data-c="'+c.id+'" value="'+esc(c.date||'')+'"></td>'+
+        '<td style="text-align:left"><input class="cell txt" type="text" data-ct="name" data-p="'+p.id+'" data-c="'+c.id+'" value="'+esc(c.name||'')+'" placeholder="Tên hợp đồng"></td>'+
+        '<td style="text-align:left"><input class="cell txt" type="text" data-ct="number" data-p="'+p.id+'" data-c="'+c.id+'" value="'+esc(c.number||'')+'" placeholder="Số hợp đồng"></td>'+
+        '<td><select class="cell" data-ct="status" data-p="'+p.id+'" data-c="'+c.id+'">'+
+          CONTRACT_STATUS.map(s=>'<option value="'+s+'"'+(c.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></td>'+
+        '<td style="text-align:left"><input class="cell txt" type="text" data-ct="parties" data-p="'+p.id+'" data-c="'+c.id+'" value="'+esc(c.parties||'')+'" placeholder="VD: TPS, PCC"></td>'+
+        '<td style="text-align:center">'+
+          '<span class="tag '+(STATUS_CLASS[c.status]||'draft')+'">'+esc(c.status||'Dự thảo')+'</span> '+
+          '<button class="btn sm" data-act="moveContract" data-p="'+p.id+'" data-c="'+c.id+'" data-dir="-1">↑</button>'+
+          '<button class="btn sm" data-act="moveContract" data-p="'+p.id+'" data-c="'+c.id+'" data-dir="1">↓</button> '+
+          '<button class="btn sm danger" data-act="delContract" data-p="'+p.id+'" data-c="'+c.id+'">✕</button></td></tr>';
+    });
+    if(!(p.items||[]).length){
+      t+='<tr><td></td><td colspan="6" style="text-align:left;color:#7a8797">Chưa có hợp đồng trong dự án này.</td></tr>';
+    }
+  });
+  t+='</tbody></table></div>';
+  h+=panel('pnl_contracts','Sổ hợp đồng', t, 'Tab độc lập — không liên kết Dashboard hay tab trái phiếu', true);
+  return h;
+}
+
+/* =========================================================================
+   14. TAB DỊCH VỤ IR
+   ========================================================================= */
+function viewIR(){
+  const months=visibleMonths();
+  let h='<div class="toolbar"><button class="btn primary" data-act="addJob">+ Thêm công việc IR</button>'+
+    '<button class="btn sm" data-act="tlPrev">« Thêm tháng trước</button>'+
+    '<button class="btn sm" data-act="tlNext">Thêm tháng sau »</button>'+
+    '<button class="btn sm" data-act="tlYear">+ Thêm 12 tháng</button>'+yearChips()+
+    '<span class="spacer"></span><button class="btn sm" data-act="exportCsvIR">Xuất Excel (CSV)</button></div>';
+  let t='<div class="tblwrap"><table class="grid">'+monthHeader(UI.collapsedYears,{toggleYear:'toggleYear'})+'<tbody>';
+  t+=row('section','','DOANH THU DỊCH VỤ IR (triệu đồng)',months.length);
+  if(!S.irJobs.length){
+    t+='<tr><td class="s1"></td><td class="s2" colspan="'+(months.length+1)+'" style="text-align:left;color:#7a8797">Chưa có công việc IR nào.</td></tr>';
+  }
+  S.irJobs.forEach((j,i)=>{
+    t+='<tr><td class="s1">'+(i+1)+'</td><td class="s2">'+
+      '<input class="cell txt" type="text" data-ir="name" data-j="'+j.id+'" value="'+esc(j.name)+'" style="width:calc(100% - 56px)">'+
+      '<button class="btn sm danger" data-act="delJob" data-j="'+j.id+'" title="Xóa">✕</button></td>'+
+      months.map(k=>'<td class="'+(k===curYM()?'cur':'')+'">'+cellInput({ir:'val',j:j.id,k:k},(j.values||{})[k],{dec:1})+'</td>').join('')+'</tr>';
+  });
+  t+='<tr class="grand"><td class="s1"></td><td class="s2">Doanh thu từ IR</td>'+
+     months.map(k=>'<td id="ir_total_'+k+'">'+fmt(irMonthTotal(k),1)+'</td>').join('')+'</tr>';
+  t+='</tbody></table></div>';
+  h+=panel('pnl_ir','Dịch vụ IR', t, 'Dòng tổng được liên kết sang Dashboard', true);
+  return h;
+}
+function refreshIR(){
+  invalidateCalc();
+  visibleMonths().forEach(k=>set('ir_total_'+k, fmt(irMonthTotal(k),1)));
+}
+
+/* =========================================================================
+   15. TAB THEO DÕI DM TUẦN
+   ========================================================================= */
+function weeklyReminder(){
+  const t=new Date(); const dw=(5-t.getDay()+7)%7;
+  if(dw===0) return {due:true, n:0, text:'Đến ngày cập nhật danh mục tuần', sub:'Hôm nay là thứ 6'};
+  return {due:false, n:dw, text:'Còn '+dw+' ngày đến ngày cập nhật danh mục tuần', sub:'Deadline: thứ 6 hàng tuần'};
+}
+function weeklyHeader(){
+  const groups=weeklyGroups();
+  let r1='<tr class="r1"><th class="s1" rowspan="3">#</th><th class="s2" rowspan="3">Chỉ tiêu</th>';
+  let r2='<tr class="r2">'; let r3='<tr class="r3">';
+  groups.forEach(g=>{
+    if(g.collapsed) return;   // năm thu gọn: ẩn khỏi bảng
+    const cols=g.months.reduce((a,m)=>a+m.weeks,0);
+    r1+='<th colspan="'+cols+'"><button class="btn sm" data-act="toggleWeekYear" data-year="'+g.year+'">▾ '+g.year+'</button></th>';
+    g.months.forEach(m=>{
+      r2+='<th colspan="'+m.weeks+'">'+MONTH_SHORT[ymParse(m.ym).m-1]+'</th>';
+      for(let w=1;w<=m.weeks;w++){
+        const key=m.ym+'-W'+w;
+        r3+='<th class="'+(key===currentWeekKey()?'cur':'')+'">W'+w+'</th>';
+      }
+    });
+  });
+  return '<thead>'+r1+'</tr>'+r2+'</tr>'+r3+'</tr></thead>';
+}
+function viewWeekly(){
+  const cols=visibleWeekCols();
+  const rem=weeklyReminder();
+  const lw=latestWeekWithData();
+  let h='<div class="reminder'+(rem.due?' due':'')+'"><div class="big">'+(rem.due?'!':rem.n)+'</div>'+
+    '<div><div style="font-weight:650">'+esc(rem.text)+'</div><div class="hint">'+esc(rem.sub)+
+    (lw?' · Latest updated: '+MONTH_SHORT[ymParse(lw.ym).m-1]+'/'+ymParse(lw.ym).y+' W'+lw.w:' · Chưa có tuần nào được cập nhật')+'</div></div></div>';
+  h+='<div class="toolbar">'+
+    '<button class="btn primary" data-act="carryForward">Carry Forward tuần trước → tuần hiện tại</button>'+
+    '<button class="btn sm" data-act="wkPrev">« Thêm tháng trước</button>'+
+    '<button class="btn sm" data-act="wkNext">Thêm tháng sau »</button>'+
+    '<button class="btn sm" data-act="wkYear">+ Thêm 12 tháng</button>'+
+    '<span class="hint" style="margin-left:4px">Nhóm theo năm:</span>'+
+    weeklyGroups().map(g=>'<button class="btn sm'+(g.collapsed?'':' primary')+'" data-act="toggleWeekYear" data-year="'+g.year+'">'+
+      (g.collapsed?'▸':'▾')+' '+g.year+'</button>').join('')+
+    '<span class="spacer"></span><button class="btn sm" data-act="exportCsvWeekly">Xuất Excel (CSV)</button></div>';
+
+  let t='<div class="tblwrap"><table class="grid">'+weeklyHeader()+'<tbody>';
+  t+='<tr class="section"><td class="s1"></td><td class="s2">Khối lượng (nhập thủ công theo tuần)</td>'+
+     new Array(cols.length).fill('<td></td>').join('')+'</tr>';
+  if(!S.bonds.length){
+    t+='<tr><td class="s1"></td><td class="s2" colspan="'+(cols.length+1)+'" style="text-align:left;color:#7a8797">Chưa có trái phiếu.</td></tr>';
+  }
+  S.bonds.forEach(b=>{
+    t+='<tr><td class="s1"></td><td class="s2 lvl2">'+esc(b.code)+'</td>'+
+      cols.map(c=>'<td class="'+(c.key===currentWeekKey()?'cur':'')+'">'+
+        cellInput({wv:b.id,wk:c.key},weeklyVol(b.id,c.key),{dec:0})+'</td>').join('')+'</tr>';
+  });
+  t+='<tr class="section"><td class="s1"></td><td class="s2">Lãi suất (lấy từ tab trái phiếu theo tháng)</td>'+
+     new Array(cols.length).fill('<td></td>').join('')+'</tr>';
+  S.bonds.forEach(b=>{
+    t+='<tr><td class="s1"></td><td class="s2 lvl2">'+esc(b.code)+'</td>'+
+      cols.map(c=>{ const cpn=bondCoupon(b,c.ym);
+        return '<td class="'+(cpn===null?'missing':'calc')+'" id="w_cpn_'+b.id+'_'+c.key+'">'+(cpn===null?'–':fmtPct(cpn,2))+'</td>';}).join('')+'</tr>';
+  });
+  t+='<tr class="grand"><td class="s1"></td><td class="s2">Lãi dự thu từ coupon (triệu đồng)</td>'+
+     cols.map(c=>{ const a=weeklyAccrual(c.key);
+       return '<td id="w_acc_'+c.key+'">'+(a.total===null?'–':fmt(a.total,0))+'</td>';}).join('')+'</tr>';
+  t+='</tbody></table></div>';
+  h+=panel('pnl_wk','Danh mục đầu tư theo tuần', t,
+     'Công thức: Mệnh giá × Khối lượng tuần × Coupon × Số ngày của tháng / 365', true);
+  return h;
+}
+function refreshWeekly(){
+  invalidateCalc();
+  visibleWeekCols().forEach(c=>{
+    const a=weeklyAccrual(c.key);
+    set('w_acc_'+c.key, a.total===null?'–':fmt(a.total,0));
+    S.bonds.forEach(b=>{
+      const cpn=bondCoupon(b,c.ym);
+      set('w_cpn_'+b.id+'_'+c.key, cpn===null?'–':fmtPct(cpn,2), cpn===null?'missing':'calc');
+    });
+  });
+}
+/* =========================================================================
+   16. BIỂU ĐỒ (SVG thuần — không phụ thuộc thư viện ngoài)
+   ========================================================================= */
+function chartScale(values){
+  const v=values.filter(x=>x!==null&&x!==undefined&&isFinite(x));
+  if(!v.length) return {min:0,max:1};
+  let min=Math.min.apply(null,v), max=Math.max.apply(null,v);
+  if(min===max){ const d=Math.abs(min)*0.1||1; min-=d; max+=d; }
+  const pad=(max-min)*0.12;
+  min=min-pad; max=max+pad;
+  if(min>0 && min<(max-min)) min=0;
+  return {min,max};
+}
+function niceTicks(min,max,n){
+  const out=[]; for(let i=0;i<=n;i++) out.push(min+(max-min)*i/n); return out;
+}
+function chartFrame(labels,opts,W,H){
+  const P={l:64,r:14,t:12,b:48};
+  const iw=W-P.l-P.r, ih=H-P.t-P.b;
+  return {P,iw,ih,W,H};
+}
+function xLabels(labels,f,step){
+  let s='';
+  labels.forEach((lb,i)=>{
+    if(i%step!==0 && i!==labels.length-1) return;
+    const x=f.P.l+(labels.length===1?f.iw/2:f.iw*i/(labels.length-1));
+    s+='<text x="'+x.toFixed(1)+'" y="'+(f.P.t+f.ih+16)+'" text-anchor="middle">'+esc(lb)+'</text>';
+  });
+  return s;
+}
+function yAxis(f,sc,opts){
+  let s='';
+  niceTicks(sc.min,sc.max,5).forEach(t=>{
+    const y=f.P.t+f.ih-(t-sc.min)/(sc.max-sc.min)*f.ih;
+    s+='<line class="gl" x1="'+f.P.l+'" y1="'+y.toFixed(1)+'" x2="'+(f.P.l+f.iw)+'" y2="'+y.toFixed(1)+'"/>';
+    s+='<text x="'+(f.P.l-8)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end">'+(opts.pct?fmtPct(t,2):fmt(t,opts.dec||0))+'</text>';
+  });
+  s+='<line class="axis" x1="'+f.P.l+'" y1="'+(f.P.t+f.ih)+'" x2="'+(f.P.l+f.iw)+'" y2="'+(f.P.t+f.ih)+'"/>';
+  s+='<line class="axis" x1="'+f.P.l+'" y1="'+f.P.t+'" x2="'+f.P.l+'" y2="'+(f.P.t+f.ih)+'"/>';
+  return s;
+}
+function legendSVG(series,f){
+  let s=''; let x=f.P.l;
+  series.forEach(se=>{
+    s+='<rect x="'+x+'" y="'+(f.P.t+f.ih+28)+'" width="14" height="4" fill="'+se.color+'"/>';
+    s+='<text x="'+(x+19)+'" y="'+(f.P.t+f.ih+35)+'">'+esc(se.name)+'</text>';
+    x += 30 + se.name.length*6.1;
+  });
+  return s;
+}
+function lineChart(labels,series,opts){
+  opts=opts||{};
+  if(!labels.length) return '<div class="empty">Chưa có dữ liệu.</div>';
+  const W=Math.max(680, labels.length*46+90), H=286;
+  const f=chartFrame(labels,opts,W,H);
+  const all=[]; series.forEach(s=>all.push.apply(all,s.data));
+  const sc=chartScale(all);
+  const X=i=>f.P.l+(labels.length===1?f.iw/2:f.iw*i/(labels.length-1));
+  const Y=v=>f.P.t+f.ih-(v-sc.min)/(sc.max-sc.min)*f.ih;
+  let s='<svg class="chart" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">';
+  s+=yAxis(f,sc,opts);
+  series.forEach(se=>{
+    let d='', pen=false;
+    se.data.forEach((v,i)=>{
+      if(v===null||v===undefined||!isFinite(v)){ pen=false; return; }
+      d += (pen?' L ':' M ')+X(i).toFixed(1)+' '+Y(v).toFixed(1); pen=true;
+    });
+    if(d) s+='<path d="'+d+'" fill="none" stroke="'+se.color+'" stroke-width="2"'+(se.dash?' stroke-dasharray="5 4"':'')+'/>';
+    se.data.forEach((v,i)=>{
+      if(v===null||v===undefined||!isFinite(v)) return;
+      s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(v).toFixed(1)+'" r="3" fill="#fff" stroke="'+se.color+'" stroke-width="1.6">'+
+         '<title>'+esc(se.name)+' · '+esc(labels[i])+' · '+(opts.pct?fmtPct(v,2):fmt(v,opts.dec||0)+(opts.unit||''))+'</title></circle>';
+    });
+  });
+  s+=xLabels(labels,f,Math.max(1,Math.ceil(labels.length/16)));
+  s+=legendSVG(series,f);
+  s+='</svg>';
+  return s;
+}
+function stackedBar(labels,series,opts){
+  opts=opts||{};
+  if(!labels.length) return '<div class="empty">Chưa có dữ liệu.</div>';
+  const W=Math.max(680, labels.length*46+90), H=286;
+  const f=chartFrame(labels,opts,W,H);
+  const totals=labels.map((_,i)=>series.reduce((a,s)=>a+num(s.data[i]),0));
+  const sc=chartScale(totals.concat([0]));
+  const bw=Math.min(30, f.iw/labels.length*0.62);
+  const X=i=>f.P.l+f.iw*(i+0.5)/labels.length;
+  const Y=v=>f.P.t+f.ih-(v-sc.min)/(sc.max-sc.min)*f.ih;
+  let s='<svg class="chart" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">';
+  s+=yAxis(f,sc,opts);
+  labels.forEach((lb,i)=>{
+    let acc=0;
+    series.forEach(se=>{
+      const v=num(se.data[i]); if(v===0) return;
+      const y0=Y(acc), y1=Y(acc+v);
+      s+='<rect x="'+(X(i)-bw/2).toFixed(1)+'" y="'+Math.min(y0,y1).toFixed(1)+'" width="'+bw.toFixed(1)+
+         '" height="'+Math.abs(y1-y0).toFixed(1)+'" fill="'+se.color+'"><title>'+esc(se.name)+' · '+esc(lb)+' · '+fmt(v,opts.dec||0)+(opts.unit||'')+'</title></rect>';
+      acc+=v;
+    });
+  });
+  s+=xLabels(labels,f,Math.max(1,Math.ceil(labels.length/16)));
+  s+=legendSVG(series,f);
+  s+='</svg>';
+  return s;
+}
+function groupedBar(labels,series,opts){
+  opts=opts||{};
+  if(!labels.length) return '<div class="empty">Chưa có dữ liệu.</div>';
+  const W=Math.max(680, labels.length*46+90), H=286;
+  const f=chartFrame(labels,opts,W,H);
+  const all=[]; series.forEach(s=>all.push.apply(all,s.data));
+  const sc=chartScale(all.concat([0]));
+  const slot=f.iw/labels.length, bw=Math.min(16, slot*0.7/series.length);
+  const Y=v=>f.P.t+f.ih-(v-sc.min)/(sc.max-sc.min)*f.ih;
+  let s='<svg class="chart" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">';
+  s+=yAxis(f,sc,opts);
+  labels.forEach((lb,i)=>{
+    const cx=f.P.l+slot*(i+0.5);
+    series.forEach((se,j)=>{
+      const v=num(se.data[i]); if(v===0) return;
+      const x=cx-(series.length*bw)/2+j*bw;
+      const y0=Y(0), y1=Y(v);
+      s+='<rect x="'+x.toFixed(1)+'" y="'+Math.min(y0,y1).toFixed(1)+'" width="'+(bw-2).toFixed(1)+
+         '" height="'+Math.abs(y1-y0).toFixed(1)+'" fill="'+se.color+'"><title>'+esc(se.name)+' · '+esc(lb)+' · '+fmt(v,opts.dec||0)+(opts.unit||'')+'</title></rect>';
+    });
+  });
+  s+=xLabels(labels,f,Math.max(1,Math.ceil(labels.length/16)));
+  s+=legendSVG(series,f);
+  s+='</svg>';
+  return s;
+}
+
+/* =========================================================================
+   17. SỰ KIỆN
+   ========================================================================= */
+function afterModelChange(){
+  invalidateCalc();
+  saveData();
+  if(UI.view==='dashboard') refreshDashboard();
+  else if(UI.view==='bond'){ const b=bondById(UI.bondId); if(b) refreshBond(b); }
+  else if(UI.view==='ir') refreshIR();
+  else if(UI.view==='weekly') refreshWeekly();
+  else if(UI.view==='control'){
+    visibleMonths().forEach(k=>{
+      S.refRates.filter(r=>r.type==='calc').forEach(r=>{
+        const v=refValue(r.id,k);
+        set('cr_'+r.id+'_'+k, v===null?'–':fmtPct(v,2), v===null?'missing':'calc');
+      });
+    });
+    drawRateChart();
+  }
+}
+document.addEventListener('focusin', e=>{
+  const el=e.target;
+  if(el.dataset && el.dataset.numinput && el.value) el.value=el.value.replace(/\./g,'');
+});
+document.addEventListener('focusout', e=>{
+  const el=e.target;
+  if(el.dataset && el.dataset.numinput){
+    const n=parseNum(el.value);
+    el.value = fmtInput(n);
+    if(n!==null && n<0) el.classList.add('neg'); else el.classList.remove('neg');
+  }
+});
+document.addEventListener('input', e=>{
+  const el=e.target, d=el.dataset||{};
+  if(el.id==='bondSearch'){ renderNav(); return; }
+  let changed=false;
+  const nv = d.numinput ? parseNum(el.value) : null;
+  if(d.eq!==undefined){ if(nv===null) delete S.equity[d.eq]; else S.equity[d.eq]=nv; changed=true; }
+  else if(d.bm!==undefined && d.k){ const b=bondById(UI.bondId); if(b){ const m=bmonth(b,d.k);
+      if(nv===null) delete m[d.bm]; else m[d.bm]=nv; changed=true; } }
+  else if(d.bi!==undefined){ const b=bondById(UI.bondId); if(b){
+      b.info[d.bi] = d.numinput? nv : el.value; changed=true; if(d.numinput===undefined) changed=true; } }
+  else if(d.br!==undefined && d.numinput){ const b=bondById(UI.bondId); if(b){ b.rate[d.br]=nv; changed=true; } }
+  else if(d.bf==='rate' && d.fee){ const b=bondById(UI.bondId); if(b){
+      const f=b.fees.find(x=>x.key===d.fee); if(f){ f.rate = nv===null?0:nv; changed=true; } } }
+  else if(d.bf==='freq' && d.fee){ const b=bondById(UI.bondId); if(b){
+      const f=b.fees.find(x=>x.key===d.fee);
+      if(f){ f.freq = Math.max(1, Math.round(nv===null?1:nv)); changed=true; } } }
+  else if(d.rr!==undefined && d.k){ const r=refById(d.rr); if(r){ if(nv===null) delete r.values[d.k]; else r.values[d.k]=nv; changed=true; } }
+  else if(d.ir==='val' && d.j && d.k){ const j=S.irJobs.find(x=>x.id===d.j); if(j){ j.values=j.values||{};
+      if(nv===null) delete j.values[d.k]; else j.values[d.k]=nv; changed=true; } }
+  else if(d.ir==='name' && d.j){ const j=S.irJobs.find(x=>x.id===d.j); if(j){ j.name=el.value; saveData(); } return; }
+  else if(d.wv!==undefined && d.wk){ if(!S.weekly.volumes[d.wv]) S.weekly.volumes[d.wv]={};
+      if(nv===null) delete S.weekly.volumes[d.wv][d.wk]; else S.weekly.volumes[d.wv][d.wk]=nv; changed=true; }
+  else if(d.pj && d.p){ const p=S.contracts.find(x=>x.id===d.p); if(p){ p[d.pj]=el.value; saveData(); } return; }
+  else if(d.ct && d.p && d.c){ const p=S.contracts.find(x=>x.id===d.p);
+      const c=p&&(p.items||[]).find(x=>x.id===d.c); if(c){ c[d.ct]=el.value; saveData(); } return; }
+  if(changed) afterModelChange();
+});
+document.addEventListener('change', e=>{
+  const el=e.target, d=el.dataset||{};
+  if(d.br==='type'){ const b=bondById(UI.bondId); if(b){ b.rate.type=el.value; saveData(); render(); } return; }
+  if(d.br==='refId'){ const b=bondById(UI.bondId); if(b){ b.rate.refId=el.value||null; afterModelChange(); } return; }
+  if(d.bf==='method' && d.fee){ const b=bondById(UI.bondId); if(b){ const f=b.fees.find(x=>x.key===d.fee);
+      if(f){ f.method=el.value; saveData(); render(); } } return; }
+  if(d.bf==='freq' && d.fee){ saveData(); render(); return; }
+  if(d.bf==='timing' && d.fee){ const b=bondById(UI.bondId); if(b){ const f=b.fees.find(x=>x.key===d.fee);
+      if(f){ f.timing = el.value==='begin'?'begin':'end'; saveData(); render(); } } return; }
+  if(d.bf==='recogMonth' && d.fee){ const b=bondById(UI.bondId); if(b){ const f=b.fees.find(x=>x.key===d.fee);
+      if(f){ f.recogMonth=el.value; afterModelChange(); } } return; }
+  if(d.bi!==undefined && el.type==='date'){ const b=bondById(UI.bondId); if(b){
+      b.info[d.bi]=el.value; saveData(); render(); } return; }
+  if(d.bd!==undefined && d.k){ const b=bondById(UI.bondId); if(b){ const m=bmonth(b,d.k);
+      m[d.bd]=el.value; afterModelChange(); } return; }
+  if(d.bi!==undefined){ const b=bondById(UI.bondId); if(b){ b.info[d.bi]=el.value; saveData(); } return; }
+  if(d.ct && d.p && d.c){ const p=S.contracts.find(x=>x.id===d.p);
+      const c=p&&(p.items||[]).find(x=>x.id===d.c);
+      if(c){ c[d.ct]=el.value; saveData(); if(d.ct==='status') render(); } return; }
+  if(d.act==='toggleSeries'){ const id=d.rate; if(el.checked) delete UI.hiddenSeries[id]; else UI.hiddenSeries[id]=1;
+      saveData(); drawRateChart(); return; }
+  if(d.act==='chartFrom'){ UI.chartFrom=el.value; saveData(); drawRateChart(); return; }
+  if(d.act==='chartTo'){ UI.chartTo=el.value; saveData(); drawRateChart(); return; }
+});
+document.addEventListener('click', e=>{
+  const nav=e.target.closest('[data-nav]');
+  if(nav){ go(nav.dataset.nav, nav.dataset.bond); return; }
+  const ph=e.target.closest('[data-panel]');
+  if(ph){ const p=ph.closest('.panel'); p.classList.toggle('collapsed');
+    UI.collapsedPanels[ph.dataset.panel]=p.classList.contains('collapsed')?1:0; saveData(); return; }
+  const a=e.target.closest('[data-act]'); if(!a) return;
+  const act=a.dataset.act;
+  const H=ACTIONS[act];
+  if(H){ e.preventDefault(); H(a, e); }
+});
+document.getElementById('btnCollapseNav').addEventListener('click', ()=>{
+  const sb=document.getElementById('sidebar');
+  sb.classList.toggle('collapsed');
+  S.settings.navCollapsed=sb.classList.contains('collapsed'); saveData();
+});
+
+/* =========================================================================
+   18. HÀNH ĐỘNG
+   ========================================================================= */
+const ACTIONS = {
+  go: (a)=>go(a.dataset.view),
+  /* ---- Timeline tháng ---- */
+  tlPrev: ()=>{ S.timeline.start=ymAdd(S.timeline.start,-1); saveData(); render(); toast('Đã thêm tháng trước'); },
+  tlNext: ()=>{ S.timeline.end=ymAdd(S.timeline.end,1); saveData(); render(); toast('Đã thêm tháng sau'); },
+  tlYear: ()=>{ S.timeline.end=ymAdd(S.timeline.end,12); saveData(); render(); toast('Đã thêm 12 tháng'); },
+  toggleYear: (a)=>{ const y=+a.dataset.year; const i=UI.collapsedYears.indexOf(y);
+    if(i>=0) UI.collapsedYears.splice(i,1); else UI.collapsedYears.push(y);
+    saveData(); render(); },
+  toggleGroup: (a)=>{
+    const g=a.dataset.group, key='g_'+g;
+    UI.collapsedPanels[key]=UI.collapsedPanels[key]?0:1;
+    applyGroup(g); saveData();
+  },
+  /* ---- Timeline tuần ---- */
+  wkPrev: ()=>{ S.weekly.start=ymAdd(S.weekly.start,-1); saveData(); render(); },
+  wkNext: ()=>{ S.weekly.end=ymAdd(S.weekly.end,1); saveData(); render(); },
+  wkYear: ()=>{ S.weekly.end=ymAdd(S.weekly.end,12); saveData(); render(); },
+  toggleWeekYear: (a)=>{ const y=+a.dataset.year; const i=UI.collapsedWeeklyYears.indexOf(y);
+    if(i>=0) UI.collapsedWeeklyYears.splice(i,1); else UI.collapsedWeeklyYears.push(y);
+    saveData(); render(); },
+  carryForward: ()=>{
+    const cw=currentWeekKey();
+    const cols=allWeekCols();
+    const idx=cols.findIndex(c=>c.key===cw);
+    if(idx<0){ toast('Tuần hiện tại nằm ngoài timeline của tab này','err'); return; }
+    let src=null;
+    for(let i=idx-1;i>=0;i--){ if(S.bonds.some(b=>weeklyVol(b.id,cols[i].key)!==null)){ src=cols[i]; break; } }
+    if(!src){ toast('Không tìm thấy tuần trước có dữ liệu','err'); return; }
+    confirmDialog('Carry Forward','Sao chép khối lượng tuần <b>'+src.ym.slice(5)+'/'+src.ym.slice(0,4)+' W'+src.w+
+      '</b> sang tuần hiện tại <b>'+cw.slice(5,7)+'/'+cw.slice(0,4)+' W'+cw.split('W')[1]+'</b>?','Sao chép',()=>{
+      S.bonds.forEach(b=>{
+        const v=weeklyVol(b.id,src.key);
+        if(v!==null){ if(!S.weekly.volumes[b.id]) S.weekly.volumes[b.id]={}; S.weekly.volumes[b.id][cw]=v; }
+      });
+      saveData(); render(); toast('Đã sao chép khối lượng sang tuần hiện tại','ok');
+    });
+  },
+  /* ---- Trái phiếu ---- */
+  addBond: ()=>{
+    openModal({title:'Thêm trái phiếu',
+      body:'<div class="field"><label>Mã trái phiếu</label><input type="text" id="nb_code" placeholder="VD: VHML12617"></div>'+
+           '<div class="hint">Sau khi tạo: tab mới được thêm vào thanh điều hướng, đồng thời xuất hiện ở Dashboard và tab Theo dõi DM tuần.</div>',
+      okText:'Tạo trái phiếu',
+      onOk:(root)=>{
+        const code=root.querySelector('#nb_code').value.trim();
+        if(!code){ toast('Nhập mã trái phiếu','err'); return false; }
+        if(S.bonds.some(b=>b.code.toLowerCase()===code.toLowerCase())){ toast('Mã trái phiếu đã tồn tại','err'); return false; }
+        const b=newBond(code); S.bonds.push(b);
+        UI.view='bond'; UI.bondId=b.id;
+        saveData(true); render(); toast('Đã thêm trái phiếu '+code,'ok');
+      }});
+  },
+  renameBond: (a)=>{
+    const b=bondById(a.dataset.bond); if(!b) return;
+    openModal({title:'Đổi mã trái phiếu',
+      body:'<div class="field"><label>Mã mới</label><input type="text" id="rb_code" value="'+esc(b.code)+'"></div>'+
+           '<div class="hint">Dữ liệu của trái phiếu được giữ nguyên (mã không phải là khóa dữ liệu).</div>',
+      okText:'Lưu',
+      onOk:(root)=>{
+        const code=root.querySelector('#rb_code').value.trim();
+        if(!code){ toast('Nhập mã trái phiếu','err'); return false; }
+        if(S.bonds.some(x=>x.id!==b.id && x.code.toLowerCase()===code.toLowerCase())){ toast('Mã đã tồn tại','err'); return false; }
+        const old=b.code; b.code=code; saveData(true); render(); toast('Đã đổi '+old+' → '+code,'ok');
+      }});
+  },
+  deleteBond: (a)=>{
+    const b=bondById(a.dataset.bond); if(!b) return;
+    confirmDialog('Xóa trái phiếu','Bạn có chắc muốn xóa trái phiếu <b>'+esc(b.code)+'</b> và toàn bộ dữ liệu liên quan?','Xóa trái phiếu',()=>{
+      S.bonds=S.bonds.filter(x=>x.id!==b.id);
+      delete S.weekly.volumes[b.id];
+      if(UI.bondId===b.id){ UI.view='dashboard'; UI.bondId=null; }
+      saveData(true); render(); toast('Đã xóa trái phiếu '+b.code,'ok');
+    });
+  },
+  feeSchedule: (a)=>{
+    const b=bondById(UI.bondId); if(!b) return;
+    _reRenderOnClose=true;
+    openFeeScheduleModal(b, a.dataset.fee);
+  },
+  editComp: (a)=>{
+    const b=bondById(UI.bondId); if(!b) return;
+    openCompModal(b, a.dataset.item, a.dataset.k);
+  },
+  /* ---- Benchmark ---- */
+  addRate: ()=>openRateModal(null),
+  editRate: (a)=>openRateModal(refById(a.dataset.rate)),
+  delRate: (a)=>{
+    const r=refById(a.dataset.rate); if(!r) return;
+    const usedBonds=S.bonds.filter(b=>b.rate.refId===r.id).map(b=>b.code);
+    const usedCalc=S.refRates.filter(x=>x.type==='calc'&&(x.components||[]).indexOf(r.id)>=0).map(x=>x.name);
+    let warn='';
+    if(usedBonds.length) warn+='<div class="alert w" style="margin-top:8px"><div><div class="t">Đang dùng bởi trái phiếu</div><div class="s">'+esc(usedBonds.join(', '))+'</div></div></div>';
+    if(usedCalc.length) warn+='<div class="alert w" style="margin-top:8px"><div><div class="t">Là thành phần của benchmark</div><div class="s">'+esc(usedCalc.join(', '))+'</div></div></div>';
+    confirmDialog('Xóa benchmark','Xóa <b>'+esc(r.name)+'</b>?'+warn,'Xóa',()=>{
+      S.refRates=S.refRates.filter(x=>x.id!==r.id);
+      S.refRates.forEach(x=>{ if(x.components) x.components=x.components.filter(c=>c!==r.id); });
+      S.bonds.forEach(b=>{ if(b.rate.refId===r.id) b.rate.refId=null; });
+      saveData(true); render(); toast('Đã xóa benchmark','ok');
+    });
+  },
+  /* ---- Hợp đồng ---- */
+  addProject: ()=>{ S.contracts.push({id:uid('pj'), name:'', items:[]}); saveData(); render(); },
+  delProject: (a)=>{
+    const p=S.contracts.find(x=>x.id===a.dataset.p); if(!p) return;
+    confirmDialog('Xóa dự án','Xóa dự án <b>'+esc(p.name||'(chưa đặt tên)')+'</b> cùng '+(p.items||[]).length+' hợp đồng bên trong?','Xóa',()=>{
+      S.contracts=S.contracts.filter(x=>x.id!==p.id); saveData(); render(); toast('Đã xóa dự án','ok');
+    });
+  },
+  moveProject: (a)=>{
+    const i=S.contracts.findIndex(x=>x.id===a.dataset.p); const dir=+a.dataset.dir;
+    const j=i+dir; if(i<0||j<0||j>=S.contracts.length) return;
+    const t=S.contracts[i]; S.contracts[i]=S.contracts[j]; S.contracts[j]=t; saveData(); render();
+  },
+  addContract: (a)=>{
+    const p=S.contracts.find(x=>x.id===a.dataset.p); if(!p) return;
+    p.items=p.items||[];
+    p.items.push({id:uid('ct'), date:todayISO(), name:'', number:'', status:'Dự thảo', parties:''});
+    saveData(); render();
+  },
+  delContract: (a)=>{
+    const p=S.contracts.find(x=>x.id===a.dataset.p); if(!p) return;
+    const c=(p.items||[]).find(x=>x.id===a.dataset.c); if(!c) return;
+    confirmDialog('Xóa hợp đồng','Xóa hợp đồng <b>'+esc(c.name||c.number||'(chưa đặt tên)')+'</b>?','Xóa',()=>{
+      p.items=p.items.filter(x=>x.id!==c.id); saveData(); render(); toast('Đã xóa hợp đồng','ok');
+    });
+  },
+  moveContract: (a)=>{
+    const p=S.contracts.find(x=>x.id===a.dataset.p); if(!p) return;
+    const i=(p.items||[]).findIndex(x=>x.id===a.dataset.c); const j=i+(+a.dataset.dir);
+    if(i<0||j<0||j>=p.items.length) return;
+    const t=p.items[i]; p.items[i]=p.items[j]; p.items[j]=t; saveData(); render();
+  },
+  /* ---- IR ---- */
+  addJob: ()=>{
+    openModal({title:'Thêm công việc IR',
+      body:'<div class="field"><label>Tên công việc</label><input type="text" id="nj_name" placeholder="VD: Tư vấn quan hệ nhà đầu tư"></div>',
+      okText:'Thêm',
+      onOk:(root)=>{
+        const n=root.querySelector('#nj_name').value.trim();
+        if(!n){ toast('Nhập tên công việc','err'); return false; }
+        S.irJobs.push({id:uid('ir'), name:n, values:{}});
+        saveData(); render(); toast('Đã thêm công việc IR','ok');
+      }});
+  },
+  delJob: (a)=>{
+    const j=S.irJobs.find(x=>x.id===a.dataset.j); if(!j) return;
+    confirmDialog('Xóa công việc IR','Xóa <b>'+esc(j.name)+'</b> và toàn bộ doanh thu đã nhập?','Xóa',()=>{
+      S.irJobs=S.irJobs.filter(x=>x.id!==j.id); saveData(); render(); toast('Đã xóa công việc IR','ok');
+    });
+  },
+  /* ---- Dữ liệu ---- */
+  exportJson: ()=>downloadJson('ib-tps-data-'+todayISO()+'.json'),
+  backup: ()=>downloadJson('ib-tps-backup-'+todayISO()+'-'+Date.now()+'.json'),
+  importJson: ()=>document.getElementById('fileInput').click(),
+  resetData: ()=>{
+    confirmDialog('Xóa toàn bộ dữ liệu',
+      'Toàn bộ trái phiếu, benchmark, hợp đồng, dịch vụ IR và danh mục tuần sẽ bị xóa vĩnh viễn.<br><br>'+
+      'Nên bấm <b>Sao lưu</b> trước khi thực hiện. Tiếp tục?','Xóa toàn bộ',()=>{
+      S=blankData(); UI=S.ui; saveData(true); render(); toast('Đã xóa toàn bộ dữ liệu','ok');
+    });
+  },
+  exportCsvDash: ()=>exportCSV(csvDashboard(),'dashboard'),
+  exportCsvControl: ()=>exportCSV(csvControl(),'control'),
+  exportCsvIR: ()=>exportCSV(csvIR(),'dich-vu-ir'),
+  exportCsvWeekly: ()=>exportCSV(csvWeekly(),'theo-doi-dm-tuan'),
+  exportCsvContracts: ()=>exportCSV(csvContracts(),'so-hop-dong'),
+  exportCsvBond: (a)=>{ const b=bondById(a.dataset.bond); if(b) exportCSV(csvBond(b), b.code); }
+};
+function applyGroup(g){
+  const hidden=!!UI.collapsedPanels['g_'+g];
+  $$('tr.g-'+g).forEach(tr=>tr.style.display=hidden?'none':'');
+  const hd=document.querySelector('tr[data-group="'+g+'"] .s1');
+  if(hd) hd.textContent = hidden?'▸':'▾';
+}
+
+/* =========================================================================
+   19. EXPORT / IMPORT
+   ========================================================================= */
+function downloadBlob(content, filename, mime){
+  const blob=new Blob([content],{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function downloadJson(name){
+  downloadBlob(JSON.stringify(S,null,2), name, 'application/json');
+  toast('Đã xuất '+name,'ok');
+}
+document.getElementById('fileInput').addEventListener('change', e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const d=JSON.parse(rd.result);
+      if(!d || typeof d!=='object' || !('bonds' in d)) throw new Error('Cấu trúc file không hợp lệ');
+      confirmDialog('Nhập dữ liệu','Dữ liệu hiện tại sẽ được thay thế bằng nội dung file <b>'+esc(f.name)+'</b>. Tiếp tục?','Nhập dữ liệu',()=>{
+        S=Object.assign(blankData(), d);
+        S.settings=Object.assign(blankData().settings,d.settings||{});
+        S.ui=Object.assign(blankData().ui,d.ui||{});
+        S.timeline=Object.assign(blankData().timeline,d.timeline||{});
+        S.weekly=Object.assign(blankData().weekly,d.weekly||{});
+        normalize(); UI=S.ui; saveData(true); render();
+        toast('Đã nhập dữ liệu từ '+f.name,'ok');
+      });
+    }catch(err){ toast('Không đọc được file: '+err.message,'err'); }
+    e.target.value='';
+  };
+  rd.readAsText(f);
+});
+/* CSV dùng dấu ; để tương thích Excel định dạng số Việt Nam */
+function exportCSV(rows,name){
+  const csv=rows.map(r=>r.map(c=>{
+    const s=(c===null||c===undefined)?'':String(c);
+    return /[";\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+  }).join(';')).join('\r\n');
+  downloadBlob('\ufeff'+csv, name+'-'+todayISO()+'.csv','text/csv;charset=utf-8');
+  toast('Đã xuất CSV (mở được bằng Excel)','ok');
+}
+function monthHeaderRow(pre){ return pre.concat(allMonths().map(k=>MONTH_SHORT[ymParse(k).m-1]+'/'+ymParse(k).y)); }
+function csvDashboard(){
+  const ms=allMonths(); const rows=[];
+  rows.push(['DASHBOARD — PHÒNG IB TPS']);
+  rows.push(monthHeaderRow(['Chỉ tiêu']));
+  rows.push(['Vốn chủ sở hữu TPS'].concat(ms.map(k=>fmtRaw(S.equity[k],2))));
+  rows.push(['Giới hạn danh mục (70% VCSH)'].concat(ms.map(k=>fmtRaw(dashMonth(k).limit,1))));
+  rows.push(['Tổng khối lượng TP nắm giữ'].concat(ms.map(k=>fmtRaw(dashMonth(k).holding,0))));
+  S.bonds.forEach(b=>rows.push(['  '+b.code].concat(ms.map(k=>fmtRaw(computeBondMonth(b,k).holding,0)))));
+  rows.push(['Tổng Giá trị TP nắm giữ (trđ)'].concat(ms.map(k=>fmtRaw(dashMonth(k).holdingValue,0))));
+  rows.push(['Remaining Capacity'].concat(ms.map(k=>fmtRaw(dashMonth(k).remaining,1))));
+  rows.push(['Tổng khối lượng TP tư vấn'].concat(ms.map(k=>fmtRaw(dashMonth(k).advised,0))));
+  S.bonds.forEach(b=>rows.push(['  '+b.code].concat(ms.map(k=>fmtRaw(computeBondMonth(b,k).advised,0)))));
+  rows.push([]);
+  rows.push(['Doanh thu từ Phí (1)'].concat(ms.map(k=>fmtRaw(dashMonth(k).feeTotal,1))));
+  FEE_DEFS.forEach(f=>rows.push(['  '+f.name].concat(ms.map(k=>fmtRaw(dashMonth(k).feeByType[f.key],1)))));
+  rows.push(['Doanh thu từ Lãi coupon (2)'].concat(ms.map(k=>fmtRaw(dashMonth(k).couponRev,1))));
+  rows.push(['Doanh thu từ dịch vụ IR (3)'].concat(ms.map(k=>fmtRaw(dashMonth(k).ir,1))));
+  rows.push(['Tổng doanh thu'].concat(ms.map(k=>fmtRaw(dashMonth(k).revenue,1))));
+  rows.push([]);
+  COMP_GROUPS.forEach(g=>{
+    rows.push([g.name].concat(ms.map(k=>{let d=0;g.items.forEach(it=>d+=dashCompCount(it.key,k).done);return d;})));
+    g.items.forEach(it=>rows.push(['  '+it.name].concat(ms.map(k=>dashCompCount(it.key,k).done))));
+  });
+  return rows;
+}
+function csvControl(){
+  const ms=allMonths(); const rows=[['THEO DÕI LÃI SUẤT (%)'], monthHeaderRow(['Benchmark'])];
+  S.refRates.forEach(r=>rows.push([r.name].concat(ms.map(k=>{const v=refValue(r.id,k); return v===null?'':fmtRaw(v,2);}))));
+  return rows;
+}
+function csvIR(){
+  const ms=allMonths(); const rows=[['DỊCH VỤ IR (triệu đồng)'], monthHeaderRow(['Công việc'])];
+  S.irJobs.forEach(j=>rows.push([j.name].concat(ms.map(k=>fmtRaw((j.values||{})[k],1)))));
+  rows.push(['Doanh thu từ IR'].concat(ms.map(k=>fmtRaw(irMonthTotal(k),1))));
+  return rows;
+}
+function csvWeekly(){
+  const cols=allWeekCols();
+  const rows=[['THEO DÕI DANH MỤC TUẦN'],
+    ['Chỉ tiêu'].concat(cols.map(c=>MONTH_SHORT[ymParse(c.ym).m-1]+'/'+ymParse(c.ym).y+' W'+c.w))];
+  rows.push(['Khối lượng']);
+  S.bonds.forEach(b=>rows.push(['  '+b.code].concat(cols.map(c=>fmtRaw(weeklyVol(b.id,c.key),0)))));
+  rows.push(['Lãi suất']);
+  S.bonds.forEach(b=>rows.push(['  '+b.code].concat(cols.map(c=>{const v=bondCoupon(b,c.ym);return v===null?'':fmtRaw(v,2);}))));
+  rows.push(['Lãi dự thu từ coupon'].concat(cols.map(c=>{const a=weeklyAccrual(c.key);return a.total===null?'':fmtRaw(a.total,0);})));
+  return rows;
+}
+function csvContracts(){
+  const rows=[['SỔ HỢP ĐỒNG'],['STT','Ngày','Đầu mục Dự án / Tên hợp đồng','Số hợp đồng','Tình trạng','Các bên ký']];
+  S.contracts.forEach((p,pi)=>{
+    rows.push([(ROMAN[pi]||pi+1)+'.','',p.name,'','','']);
+    (p.items||[]).forEach((c,ci)=>rows.push([ci+1, fmtDate(c.date), c.name, c.number, c.status, c.parties]));
+  });
+  return rows;
+}
+function csvBond(b){
+  const ms=allMonths();
+  const rows=[['TRÁI PHIẾU '+b.code],
+    ['Ngày phát hành', fmtDate(b.info.issueDate)],
+    ['Ngày đáo hạn', fmtDate(b.info.maturityDate)],
+    ['Ngày đầu tiên thu phí', fmtDate(b.info.firstFeeDate)],
+    ['Trả lãi (tháng/lần)', b.info.payFreq],
+    ['XHTN', b.info.xhtn],
+    ['Mệnh giá (trđ)', fmtRaw(b.info.parValue,2)],
+    [], monthHeaderRow(['Chỉ tiêu'])];
+  const line=(name,fn,dec)=>rows.push([name].concat(ms.map(k=>{const v=fn(computeBondMonth(b,k)); return (v===null||v===undefined)?'':fmtRaw(v,dec||0);})));
+  line('Khối lượng tư vấn',m=>m.advised);
+  line('TCPH mua lại',m=>m.buyback);
+  line('Khối lượng lưu hành',m=>m.outstanding);
+  line('Khối lượng đầu tư',m=>m.invested);
+  line('Khối lượng bán ra',m=>m.sold);
+  line('Khối lượng nắm giữ',m=>m.holding);
+  line('Lãi suất Coupon (%)',m=>m.coupon,2);
+  line('LS tham chiếu (%)',m=>m.ref,2);
+  FEE_DEFS.forEach(f=>{
+    line(f.name,m=>m.fees[f.key],1);
+    const cfg=b.fees.find(x=>x.key===f.key);
+    if(feeHasSchedule(cfg)) line('  % '+f.name,m=>m.feeRates[f.key],4);
+    if(cfg && cfg.method!=='once' && num(cfg.freq)>1) line('  Số ngày kỳ thu — '+f.name,m=>m.feeDays[f.key]||null,0);
+  });
+  line('Doanh thu từ Phí (1)',m=>m.feeTotal,1);
+  line('Số ngày nắm giữ',m=>m.holdDays);
+  line('Doanh thu Lãi coupon (2)',m=>m.couponRev,1);
+  line('Doanh thu (3)',m=>m.total,1);
+  rows.push(['Sau đầu tư (hoàn thành/tổng)'].concat(ms.map(k=>{const c=bondCompTotal(b,k);return c.total?c.done+'/'+c.total:'';})));
+  return rows;
+}
+
+/* =========================================================================
+   20. DỮ LIỆU MẪU (chỉ dùng khi mở lần đầu — có thể sửa/xóa hoàn toàn)
+   ========================================================================= */
+function seedData(){
+  const d=blankData();
+  const mk=(name,vals)=>({id:uid('rate'), name:name, type:'manual', values:vals||{}, components:[], method:'average'});
+  const series=(pairs)=>{ const o={}; let cur=null;
+    allMonthsFor(d).forEach(k=>{ if(pairs[k]!==undefined) cur=pairs[k]; if(cur!==null) o[k]=cur; });
+    return o; };
+  const tpb=mk('12M KHCN TPB', series({'2025-10':5.70,'2026-03':6.25,'2026-07':6.20,'2026-08':6.10,'2026-09':6.50}));
+  const vcb=mk('12M KHCN VCB', series({'2025-10':5.70,'2026-03':6.25,'2026-07':6.20,'2026-08':6.10,'2026-09':6.50}));
+  const bid=mk('12M KHCN BIDV', series({'2025-10':5.70,'2026-03':6.25,'2026-07':6.20,'2026-08':6.10,'2026-09':6.50}));
+  const ctg=mk('12M KHCN VietinBank', series({'2025-10':5.70,'2026-03':6.25,'2026-07':6.20,'2026-08':6.10,'2026-09':6.50}));
+  const agr=mk('12M KHCN Agribank', series({'2025-10':5.70,'2026-03':6.25,'2026-07':6.20,'2026-08':6.10,'2026-09':6.50}));
+  const vpb=mk('12M KHCN VPB', series({'2025-10':5.90,'2026-03':6.45,'2026-07':6.40,'2026-08':6.30,'2026-09':6.70}));
+  const big4={id:uid('rate'), name:'Avg 12M KHCN Big4', type:'calc', values:{}, method:'average',
+              components:[vcb.id,bid.id,ctg.id,agr.id]};
+  d.refRates=[tpb,big4,vcb,bid,ctg,agr,vpb];
+
+  const b1=newBond('PKC12601');
+  b1.info={issueDate:'2026-03-31', maturityDate:'2029-03-31', firstFeeDate:'2026-03-31', payFreq:3, xhtn:'AA-', parValue:100};
+  b1.rate={type:'combined', fixed:null, spread:4.10, refId:tpb.id, first4:10.50, floor:null, cap:null};
+  b1.fees.find(f=>f.key==='advisory').rate=0.25;
+  b1.fees.find(f=>f.key==='advisory').recogMonth='2026-03';
+  b1.fees.find(f=>f.key==='issuing').rate=0.50;
+  b1.fees.find(f=>f.key==='issuing').recogMonth='2026-04';
+  b1.fees.find(f=>f.key==='custody').rate=0.75;
+  b1.fees.find(f=>f.key==='custody').method='actual';
+  allMonthsFor(d).forEach(k=>{
+    if(ymDiff('2026-03',k)>=0){
+      b1.months[k]={advised:15000, invested: k==='2026-03'?10000:11000};
+    }
+  });
+  const b2=newBond('VHML12616');
+  b2.info={issueDate:'2026-08-27', maturityDate:'2029-08-27', firstFeeDate:'2026-08-27', payFreq:3, xhtn:'vnAA+', parValue:100};
+  b2.rate={type:'conditional', fixed:null, spread:5.10, refId:big4.id, first4:11.00, floor:10.00, cap:14.00};
+  b2.fees.find(f=>f.key==='advisory').rate=0.20; b2.fees.find(f=>f.key==='advisory').recogMonth='2026-09';
+  b2.fees.find(f=>f.key==='issuing').rate=0.50; b2.fees.find(f=>f.key==='issuing').recogMonth='2026-09';
+  b2.fees.find(f=>f.key==='custody').rate=0.50; b2.fees.find(f=>f.key==='custody').method='actual';
+  b2.fees.find(f=>f.key==='nshtp').rate=0.50; b2.fees.find(f=>f.key==='nshtp').method='actual';
+  allMonthsFor(d).forEach(k=>{
+    if(ymDiff('2026-08',k)>=0) b2.months[k]={advised:10000, invested:5000};
+  });
+  d.bonds=[b1,b2];
+
+  d.contracts=[
+    {id:uid('pj'), name:'Trái Phiếu Công ty TNHH Xây dựng Dân Dụng Phú Quốc ("PCC") — PKC12601', items:[
+      {id:uid('ct'), date:'2026-03-27', name:'Hợp Đồng Tư Vấn Và Đại Lý Phát Hành', number:'01/2026/HĐTV/TPS-PCC', status:'Ongoing', parties:'TPS, PCC'},
+      {id:uid('ct'), date:'2026-03-27', name:'Hợp Đồng Đại Diện NSHTP', number:'01/2026/ĐDNSHTP/TPS-PCC', status:'Ongoing', parties:'TPS, PCC'},
+      {id:uid('ct'), date:'2026-03-31', name:'Hợp Đồng Đặt Mua Trái Phiếu', number:'01/2026/PKC12601', status:'Ongoing', parties:'TPS, PCC'}
+    ]},
+    {id:uid('pj'), name:'Công ty Cổ phần Thương mại Dịch vụ Giấy Thuận An ("TAH")', items:[
+      {id:uid('ct'), date:'2026-06-01', name:'Hợp Đồng Tư Vấn Quản Trị', number:'01/2026/HĐTVQT/TPS-TAH', status:'Ongoing', parties:'TPS, TAH'}
+    ]}
+  ];
+  d.irJobs=[
+    {id:uid('ir'), name:'Tư vấn niêm yết', values:{'2026-06':300,'2026-07':300}},
+    {id:uid('ir'), name:'Tư vấn quản trị công ty', values:{'2026-06':150}}
+  ];
+  allMonthsFor(d).forEach(k=>{ d.equity[k]=3500000; });
+  d.weekly.volumes[b1.id]={'2025-11-W1':1100,'2025-11-W2':1100,'2025-11-W3':800,'2025-11-W4':700};
+  return d;
+}
+function allMonthsFor(d){
+  const out=[]; let k=d.timeline.start;
+  const n=ymDiff(d.timeline.start,d.timeline.end);
+  for(let i=0;i<=n;i++){ out.push(k); k=ymAdd(k,1); }
+  return out;
+}
+
+/* =========================================================================
+   21. KHỞI TẠO
+   ========================================================================= */
+(function init(){
+  loadData();
+  if(S.settings.navCollapsed) document.getElementById('sidebar').classList.add('collapsed');
+  render();
+  const el=document.getElementById('bondSearch');
+  el.addEventListener('keydown', e=>{ if(e.key==='Escape'){ el.value=''; renderNav(); } });
+})();
+
+</script>
+</body>
+</html>
