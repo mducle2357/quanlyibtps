@@ -4,6 +4,9 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './lib/auth';
 import { ToastProvider } from './lib/toast';
+import BondDetailPage from './pages/BondDetailPage';
+import BondsListPage from './pages/BondsListPage';
+import ControlPage from './pages/ControlPage';
 import LoginPage from './pages/LoginPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import UsersPage from './pages/UsersPage';
@@ -29,12 +32,12 @@ export default function App() {
                 }
               >
                 <Route index element={<PlaceholderPage title="Dashboard" phase="Phase 4" />} />
-                <Route path="control" element={<PlaceholderPage title="Control — Reference Rate" phase="Phase 2" />} />
+                <Route path="control" element={<ControlPage />} />
                 <Route path="contracts" element={<PlaceholderPage title="Sổ Hợp đồng" phase="Phase 4" />} />
                 <Route path="ir" element={<PlaceholderPage title="Dịch vụ IR" phase="Phase 4" />} />
                 <Route path="weekly" element={<PlaceholderPage title="Theo dõi DM tuần" phase="Phase 5" />} />
-                <Route path="bonds" element={<PlaceholderPage title="Danh sách Trái phiếu" phase="Phase 2" />} />
-                <Route path="bonds/:bondId" element={<PlaceholderPage title="Tab Trái phiếu" phase="Phase 2" />} />
+                <Route path="bonds" element={<BondsListPage />} />
+                <Route path="bonds/:bondId" element={<BondDetailPage />} />
                 <Route path="audit" element={<PlaceholderPage title="Audit Log" phase="Phase 6" />} />
                 <Route
                   path="users"

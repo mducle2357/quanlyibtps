@@ -15,19 +15,26 @@ build rather than a cut-down one. Current state:
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Repo scaffold, DB schema (all entities), auth + RBAC, audit-log infra, optimistic locking, shell UI + navigation | **Done** |
-| 2 | Control tab (reference rates) + coupon engine + bond CRUD + monthly volume grid | Not started |
+| 2 | Control tab (reference rates) + coupon engine + bond CRUD + monthly volume grid | **Done** |
 | 3 | Fee engine (6 fee types, time-varying rate schedules) + revenue | Not started |
 | 4 | Dashboard aggregation + IR tab + Contracts register | Not started |
 | 5 | Weekly Portfolio + Compliance checklist + alerts | Not started |
 | 6 | Audit log viewer, backup/export/import, duplicate detection, perf, full test suite, Docker polish | Not started |
 
 The **calculation engine itself** (coupon: fixed/floating/combined/conditional;
-fee proration; dashboard aggregation) is already implemented and unit-tested
-in `backend/app/services/calc_engine.py` and `dashboard_engine.py` — it was
-built first, ahead of Phase 2, because it is the highest-risk, most
-correctness-critical part of the system and every later phase's API sits on
-top of it unchanged. `backend/tests/` reproduces acceptance tests 2–8, 10, 15,
-16 from the spec (§35) as pure unit tests (no DB required).
+fee proration; dashboard aggregation) was built first, ahead of the rest of
+Phase 2, because it is the highest-risk, most correctness-critical part of the
+system and every later phase's API sits on top of it unchanged
+(`backend/app/services/calc_engine.py`, `dashboard_engine.py`).
+`backend/tests/` reproduces acceptance tests 1–10, 12, 13, 15, 16 from the
+spec (§35): tests 2–8, 10, 15, 16 as pure unit tests against the engine
+directly (no DB), and 1, 3, 4, 5, 9, 12, 13 as integration tests against the
+real Reference Rates + Bonds API (`test_reference_rates_api.py`,
+`test_bonds_api.py`), each round-tripped through a real local PostgreSQL
+instance inside a rolled-back transaction (`tests/conftest.py`). Tests 11
+(persistence across logout/reload) and 14 (audit log) were exercised manually
+via the browser in this phase and get automated coverage in Phase 6 alongside
+the audit log viewer.
 
 ## Architecture
 
@@ -95,6 +102,19 @@ depth — see `app/services/concurrency.py` and the `StaleDataError` handler in
    layer rather than a `weekly_periods` lookup table, since a week is fully
    determined by its month + index (max 5/month) and never referenced from
    outside the Weekly Portfolio module.
+6. **Every editable grid cell carries a `version`**, not just structural
+   records — `reference_rate_monthly_values` and `ir_monthly_revenue` got a
+   `version` column added in a follow-up migration (`0efeba53be5f`) once it
+   became clear the spec's "cùng sửa một bảng" concurrency requirement (§3)
+   reads naturally as applying to every editable cell, not only whole rows.
+   `bond_monthly_data` versions the whole row (4 volume fields together)
+   since those 4 fields are edited and displayed as one unit.
+7. **`GET /reference-rates/resolved`** returns every benchmark's per-month
+   value with calculated (average/min/max) rates already resolved
+   server-side. This exists so the frontend chart/grid never re-implements
+   the resolution/circular-dependency logic in TypeScript — a second
+   implementation of that logic is exactly the kind of duplication that goes
+   stale and quietly diverges from the engine used for real calculations.
 
 ## Local development
 

@@ -1,5 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 
 const SYSTEM_VIEWS = [
@@ -10,10 +12,24 @@ const SYSTEM_VIEWS = [
   { id: 'weekly', name: 'Theo dõi DM tuần', ic: 'DM' },
 ];
 
+interface BondNavItem {
+  id: string;
+  code: string;
+  status_key: 'pre' | 'active' | 'matured';
+}
+
 export default function Layout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [search, setSearch] = useState('');
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  const { data: bonds } = useQuery<BondNavItem[]>({
+    queryKey: ['bonds'],
+    queryFn: async () => (await api.get('/bonds')).data,
+  });
+  const filtered = (bonds ?? []).filter((b) => !search || b.code.toLowerCase().includes(search.toLowerCase()));
+  const badgeFor = (k: string) => (k === 'active' ? 'A' : k === 'matured' ? 'M' : 'P');
 
   return (
     <div id="app">
@@ -24,6 +40,9 @@ export default function Layout() {
             <b>TPS · Investment Banking</b>
             <span>Operating Dashboard</span>
           </div>
+        </div>
+        <div className="navsearch">
+          <input placeholder="Tìm trái phiếu…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <div className="navlist">
           <div className="navgroup">Hệ thống</div>
@@ -39,13 +58,27 @@ export default function Layout() {
               <span className="lbl">{v.name}</span>
             </NavLink>
           ))}
-          <div className="navgroup">Bond &amp; Quản trị</div>
-          <NavLink to="/bonds" className={({ isActive }) => 'navitem' + (isActive ? ' active' : '')} title="Danh sách trái phiếu">
-            <span className="ic">TP</span>
-            <span className="lbl">Danh sách Trái phiếu</span>
-          </NavLink>
+          <div className="navgroup">Trái phiếu ({bonds?.length ?? 0})</div>
+          {filtered.length === 0 && (
+            <div style={{ padding: '6px 14px', fontSize: 11, color: '#7d97b5' }} className="hide-c">
+              {search ? 'Không có mã khớp' : 'Chưa có trái phiếu'}
+            </div>
+          )}
+          {filtered.map((b) => (
+            <NavLink
+              key={b.id}
+              to={`/bonds/${b.id}`}
+              className={({ isActive }) => 'navitem' + (isActive ? ' active' : '')}
+              title={b.code}
+            >
+              <span className="ic">TP</span>
+              <span className="lbl">{b.code}</span>
+              <span className="badge">{badgeFor(b.status_key)}</span>
+            </NavLink>
+          ))}
           {user?.roles.includes('Admin') && (
             <>
+              <div className="navgroup">Quản trị</div>
               <NavLink to="/audit" className={({ isActive }) => 'navitem' + (isActive ? ' active' : '')} title="Audit Log">
                 <span className="ic">AL</span>
                 <span className="lbl">Audit Log</span>
@@ -60,7 +93,9 @@ export default function Layout() {
         <div className="navfoot">
           <div className="sv">
             <span className="dot" />
-            <span>{user?.full_name} · {user?.roles.join(', ')}</span>
+            <span>
+              {user?.full_name} · {user?.roles.join(', ')}
+            </span>
           </div>
           <button
             className="backlink"
