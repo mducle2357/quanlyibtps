@@ -27,17 +27,33 @@ METHOD_ACTUAL = "actual"
 METHOD_FLAT = "flat"
 
 FEE_DEFS = [
-    {"key": FEE_ADVISORY, "name": "Phí tư vấn phát hành", "base": "advised", "methods": [METHOD_ONCE]},
-    {"key": FEE_ISSUING, "name": "Phí đại lý phát hành", "base": "advised", "methods": [METHOD_ONCE]},
-    {"key": FEE_CUSTODY, "name": "Phí đại lý lưu ký", "base": "outstanding", "methods": [METHOD_ACTUAL, METHOD_FLAT]},
-    {"key": FEE_NSHTP, "name": "Phí đại diện NSHTP", "base": "outstanding", "methods": [METHOD_ACTUAL, METHOD_FLAT]},
+    {
+        "key": FEE_ADVISORY, "name": "Phí tư vấn phát hành", "base": "advised", "methods": [METHOD_ONCE],
+        "basis": "Tính trên 1.1 Khối lượng tư vấn",
+    },
+    {
+        "key": FEE_ISSUING, "name": "Phí đại lý phát hành", "base": "advised", "methods": [METHOD_ONCE],
+        "basis": "Tính trên 1.1 Khối lượng tư vấn",
+    },
+    {
+        "key": FEE_CUSTODY, "name": "Phí đại lý lưu ký", "base": "outstanding", "methods": [METHOD_ACTUAL, METHOD_FLAT],
+        "basis": "Tính trên Khối lượng lưu hành",
+    },
+    {
+        "key": FEE_NSHTP, "name": "Phí đại diện NSHTP", "base": "outstanding", "methods": [METHOD_ACTUAL, METHOD_FLAT],
+        "basis": "Tính trên Khối lượng lưu hành",
+    },
     {
         "key": FEE_COLLATERAL,
         "name": "Phí quản lý TSBĐ",
         "base": "outstanding",
         "methods": [METHOD_ACTUAL, METHOD_FLAT],
+        "basis": "Tính trên Khối lượng lưu hành",
     },
-    {"key": FEE_OTHER, "name": "Phí khác (thu xếp vốn)", "base": "invested", "methods": [METHOD_ONCE]},
+    {
+        "key": FEE_OTHER, "name": "Phí khác (thu xếp vốn)", "base": "invested", "methods": [METHOD_ONCE],
+        "basis": "Tính trên 1.2 Khối lượng đầu tư",
+    },
 ]
 FEE_KEYS = [f["key"] for f in FEE_DEFS]
 
@@ -122,7 +138,7 @@ class BondMonthlyData(Base, UUIDPk, TimestampMixin):
     __table_args__ = (UniqueConstraint("bond_id", "month_key", name="uq_bond_month"),)
 
 
-class BondFeeConfig(Base, UUIDPk):
+class BondFeeConfig(Base, UUIDPk, TimestampMixin):
     """One row per bond per fee type (fixed set of 6). Rate here is the *default*
     rate; time-varying rates are layered on top via BondFeeRatePeriod (prompt 13.1)."""
 

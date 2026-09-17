@@ -1,6 +1,10 @@
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import AddBondModal from './AddBondModal';
+import AdminActions from './AdminActions';
 
 const SYSTEM_VIEWS = [
   { id: 'dashboard', name: 'Dashboard', ic: 'DB' },
@@ -10,10 +14,25 @@ const SYSTEM_VIEWS = [
   { id: 'weekly', name: 'Theo dõi DM tuần', ic: 'DM' },
 ];
 
+interface BondNavItem {
+  id: string;
+  code: string;
+  status_key: 'pre' | 'active' | 'matured';
+}
+
 export default function Layout() {
   const [collapsed, setCollapsed] = useState(false);
-  const { user, logout } = useAuth();
+  const [search, setSearch] = useState('');
+  const [showAdd, setShowAdd] = useState(false);
+  const { user, logout, hasRole } = useAuth();
   const navigate = useNavigate();
+
+  const { data: bonds } = useQuery<BondNavItem[]>({
+    queryKey: ['bonds'],
+    queryFn: async () => (await api.get('/bonds')).data,
+  });
+  const filtered = (bonds ?? []).filter((b) => !search || b.code.toLowerCase().includes(search.toLowerCase()));
+  const badgeFor = (k: string) => (k === 'active' ? 'A' : k === 'matured' ? 'M' : 'P');
 
   return (
     <div id="app">
@@ -24,6 +43,9 @@ export default function Layout() {
             <b>TPS · Investment Banking</b>
             <span>Operating Dashboard</span>
           </div>
+        </div>
+        <div className="navsearch">
+          <input placeholder="Tìm trái phiếu…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <div className="navlist">
           <div className="navgroup">Hệ thống</div>
@@ -39,28 +61,55 @@ export default function Layout() {
               <span className="lbl">{v.name}</span>
             </NavLink>
           ))}
-          <div className="navgroup">Bond &amp; Quản trị</div>
-          <NavLink to="/bonds" className={({ isActive }) => 'navitem' + (isActive ? ' active' : '')} title="Danh sách trái phiếu">
-            <span className="ic">TP</span>
-            <span className="lbl">Danh sách Trái phiếu</span>
+          <div className="navgroup">Trái phiếu ({bonds?.length ?? 0})</div>
+          {filtered.length === 0 && (
+            <div style={{ padding: '6px 14px', fontSize: 11, color: '#7d97b5' }} className="hide-c">
+              {search ? 'Không có mã khớp' : 'Chưa có trái phiếu'}
+            </div>
+          )}
+          {filtered.map((b) => (
+            <NavLink
+              key={b.id}
+              to={`/bonds/${b.id}`}
+              className={({ isActive }) => 'navitem' + (isActive ? ' active' : '')}
+              title={b.code}
+            >
+              <span className="ic">TP</span>
+              <span className="lbl">{b.code}</span>
+              <span className="badge">{badgeFor(b.status_key)}</span>
+            </NavLink>
+          ))}
+          {hasRole('Admin', 'Manager', 'Staff') && (
+            <button className="navbtn" onClick={() => setShowAdd(true)} title="Thêm trái phiếu">
+              + <span className="hide-c">Thêm trái phiếu</span>
+            </button>
+          )}
+          <NavLink to="/bonds" end className={({ isActive }) => 'navitem' + (isActive ? ' active' : '')} title="Xem tất cả trái phiếu">
+            <span className="ic">··</span>
+            <span className="lbl">Xem tất cả (danh sách)</span>
           </NavLink>
-          {user?.roles.includes('Admin') && (
+          {hasRole('Admin', 'Manager') && (
             <>
+              <div className="navgroup">Quản trị</div>
               <NavLink to="/audit" className={({ isActive }) => 'navitem' + (isActive ? ' active' : '')} title="Audit Log">
                 <span className="ic">AL</span>
                 <span className="lbl">Audit Log</span>
               </NavLink>
-              <NavLink to="/users" className={({ isActive }) => 'navitem' + (isActive ? ' active' : '')} title="Người dùng">
-                <span className="ic">US</span>
-                <span className="lbl">Người dùng</span>
-              </NavLink>
+              {user?.roles.includes('Admin') && (
+                <NavLink to="/users" className={({ isActive }) => 'navitem' + (isActive ? ' active' : '')} title="Người dùng">
+                  <span className="ic">US</span>
+                  <span className="lbl">Người dùng</span>
+                </NavLink>
+              )}
             </>
           )}
         </div>
         <div className="navfoot">
           <div className="sv">
             <span className="dot" />
-            <span>{user?.full_name} · {user?.roles.join(', ')}</span>
+            <span>
+              {user?.full_name} · {user?.roles.join(', ')}
+            </span>
           </div>
           <button
             className="backlink"
@@ -83,11 +132,13 @@ export default function Layout() {
             <h1>TPS IB Operating Dashboard</h1>
           </div>
           <div className="spacer" />
+          <AdminActions />
         </div>
         <div className="content">
           <Outlet />
         </div>
       </main>
+      {showAdd && <AddBondModal onClose={() => setShowAdd(false)} />}
     </div>
   );
 }

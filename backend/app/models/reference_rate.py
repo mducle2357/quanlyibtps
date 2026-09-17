@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy import ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,6 +23,8 @@ class ReferenceRate(Base, UUIDPk, TimestampMixin):
     calc_method: Mapped[str | None] = mapped_column(String(20), nullable=True)  # only for calculated
     created_by: Mapped[str | None] = mapped_column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
     updated_by: Mapped[str | None] = mapped_column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    __mapper_args__ = {"version_id_col": version}
 
     components: Mapped[list["ReferenceRateComponent"]] = relationship(
         foreign_keys="ReferenceRateComponent.reference_rate_id",
@@ -60,6 +62,8 @@ class ReferenceRateMonthlyValue(Base, UUIDPk):
     month_key: Mapped[str] = mapped_column(String(7), nullable=False)
     rate: Mapped[float] = mapped_column(Numeric(12, 6), nullable=False)
     updated_by: Mapped[str | None] = mapped_column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    __mapper_args__ = {"version_id_col": version}
 
     reference_rate: Mapped[ReferenceRate] = relationship(back_populates="monthly_values")
 
