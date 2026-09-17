@@ -17,7 +17,7 @@ build rather than a cut-down one. Current state:
 | 1 | Repo scaffold, DB schema (all entities), auth + RBAC, audit-log infra, optimistic locking, shell UI + navigation | **Done** |
 | 2 | Control tab (reference rates) + coupon engine + bond CRUD + monthly volume grid | **Done** |
 | 3 | Fee engine (6 fee types, time-varying rate schedules) + revenue | **Done** |
-| 4 | Dashboard aggregation + IR tab + Contracts register | Not started |
+| 4 | Dashboard aggregation + IR tab + Contracts register | **Done** (Compliance section is 0/0 placeholder until Phase 5) |
 | 5 | Weekly Portfolio + Compliance checklist + alerts | Not started |
 | 6 | Audit log viewer, backup/export/import, duplicate detection, perf, full test suite, Docker polish | Not started |
 
@@ -127,7 +127,15 @@ depth — see `app/services/concurrency.py` and the `StaleDataError` handler in
 9. **`BondFeeConfig` got `created_at`/`updated_at`** added in a follow-up
    migration (`b480be34d7e3`) — missed in the initial schema pass, caught
    while wiring the fee API, consistent with §1.3's "mọi record quan trọng
-   nên có created_at, updated_at".
+   nên có created_at, updated_at". `IRJob` and `ContractProject` similarly
+   got a `version` column added (`1b44798ef647`) once it was clear renaming
+   either is a genuine multi-user race, same reasoning as assumption 6.
+10. **Dashboard alerts (§18.6) are partial in this phase**: bond-maturing-
+    soon, benchmark-missing-current-month, and portfolio-near/over-limit are
+    live. Compliance-incomplete and weekly-not-updated alerts return nothing
+    today because those entities don't exist until Phase 5 — `get_alerts` in
+    `dashboard_service.py` will gain those two checks then, not before,
+    rather than faking a "0 outstanding" alert that isn't really true yet.
 
 ## Local development
 

@@ -6,7 +6,10 @@ import { AuthProvider } from './lib/auth';
 import { ToastProvider } from './lib/toast';
 import BondDetailPage from './pages/BondDetailPage';
 import BondsListPage from './pages/BondsListPage';
+import ContractsPage from './pages/ContractsPage';
 import ControlPage from './pages/ControlPage';
+import DashboardPage from './pages/DashboardPage';
+import IRPage from './pages/IRPage';
 import LoginPage from './pages/LoginPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import UsersPage from './pages/UsersPage';
@@ -31,10 +34,10 @@ export default function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<PlaceholderPage title="Dashboard" phase="Phase 4" />} />
+                <Route index element={<DashboardPage />} />
                 <Route path="control" element={<ControlPage />} />
-                <Route path="contracts" element={<PlaceholderPage title="Sổ Hợp đồng" phase="Phase 4" />} />
-                <Route path="ir" element={<PlaceholderPage title="Dịch vụ IR" phase="Phase 4" />} />
+                <Route path="contracts" element={<ContractsPage />} />
+                <Route path="ir" element={<IRPage />} />
                 <Route path="weekly" element={<PlaceholderPage title="Theo dõi DM tuần" phase="Phase 5" />} />
                 <Route path="bonds" element={<BondsListPage />} />
                 <Route path="bonds/:bondId" element={<BondDetailPage />} />

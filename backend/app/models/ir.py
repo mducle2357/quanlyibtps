@@ -13,6 +13,8 @@ class IRJob(Base, UUIDPk, TimestampMixin):
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_by: Mapped[str | None] = mapped_column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
     updated_by: Mapped[str | None] = mapped_column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    __mapper_args__ = {"version_id_col": version}
 
     monthly_revenue: Mapped[list["IRMonthlyRevenue"]] = relationship(
         back_populates="job", cascade="all, delete-orphan"
