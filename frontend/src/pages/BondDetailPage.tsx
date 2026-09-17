@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import BondCompliancePanel from '../components/BondCompliancePanel';
 import BondFeesPanel from '../components/BondFeesPanel';
 import { api, apiErrorMessage, isConflictError } from '../lib/api';
 import { useAuth } from '../lib/auth';
@@ -126,6 +127,7 @@ export default function BondDetailPage() {
       <BasicInfoPanel bond={bond} canEdit={canEdit} onSaved={refetchBond} />
       <InterestConfigPanel bond={bond} refRates={refRates ?? []} canEdit={canEdit} onSaved={refetchBond} />
       <BondFeesPanel bondId={bond.id} feeConfigs={bond.fee_configs} canEdit={canEdit} />
+      <BondCompliancePanel bondId={bond.id} canEdit={canEdit} />
 
       <div className="panel">
         <header>

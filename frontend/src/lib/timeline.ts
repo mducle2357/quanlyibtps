@@ -46,3 +46,60 @@ export function curMonthKey(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
+
+// --- weekly helpers (mirrors backend/app/services/dates.py week helpers) ---
+
+function daysInMonth(y: number, m: number): number {
+  return new Date(y, m, 0).getDate();
+}
+
+export function weeksInMonth(ym: string): number {
+  const { y, m } = ymParse(ym);
+  return Math.ceil(daysInMonth(y, m) / 7);
+}
+
+export function weekKeyMonth(weekKey: string): string {
+  return weekKey.slice(0, weekKey.lastIndexOf('-W'));
+}
+
+export function weekKeyIndex(weekKey: string): number {
+  return Number(weekKey.slice(weekKey.lastIndexOf('-W') + 2));
+}
+
+export function allWeekKeysBetween(startWeek: string, endWeek: string): string[] {
+  const startYm = weekKeyMonth(startWeek);
+  const endYm = weekKeyMonth(endWeek);
+  const out: string[] = [];
+  for (const ym of monthsBetween(startYm, endYm)) {
+    const n = weeksInMonth(ym);
+    for (let w = 1; w <= n; w++) out.push(`${ym}-W${w}`);
+  }
+  return out.filter((w) => w >= startWeek && w <= endWeek);
+}
+
+export function weekGroups(weeks: string[]): { year: number; month: string; weeks: string[] }[] {
+  const groups: { year: number; month: string; weeks: string[] }[] = [];
+  for (const w of weeks) {
+    const ym = weekKeyMonth(w);
+    const { y } = ymParse(ym);
+    const last = groups[groups.length - 1];
+    if (!last || last.month !== ym) groups.push({ year: y, month: ym, weeks: [w] });
+    else last.weeks.push(w);
+  }
+  return groups;
+}
+
+export function currentWeekKey(): string {
+  const d = new Date();
+  const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const w = Math.min(Math.ceil(d.getDate() / 7), weeksInMonth(ym));
+  return `${ym}-W${w}`;
+}
+
+/** Days until next Friday (0 if today is Friday or later this week already passed it). */
+export function daysUntilFriday(): number {
+  const day = new Date().getDay(); // 0=Sun..6=Sat
+  const friday = 5;
+  const diff = (friday - day + 7) % 7;
+  return diff;
+}

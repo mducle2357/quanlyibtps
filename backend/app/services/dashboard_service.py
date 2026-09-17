@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from sqlalchemy.orm import Session
 
 from app.models.bond import Bond
+from app.models.compliance import ComplianceChecklistEntry
 from app.models.weekly import EquityMonthlyValue
 from app.schemas.dashboard import Alert, BondPortfolioRow, DashboardResponse
 from app.services import bond_service as svc
@@ -40,6 +41,7 @@ def get_dashboard(db: Session, month_key: str) -> DashboardResponse:
     limit = equity * 0.7 if equity is not None else None
 
     ir_revenue = _ir_total(db, month_key)
+    compliance_done, compliance_total = _compliance_counts(db, month_key)
 
     return DashboardResponse(
         month_key=month_key,
@@ -55,11 +57,8 @@ def get_dashboard(db: Session, month_key: str) -> DashboardResponse:
         coupon_revenue=coupon_revenue,
         ir_revenue=ir_revenue,
         total_revenue=fee_total + coupon_revenue + ir_revenue,
-        # Compliance aggregation lands in Phase 5 once the checklist entities
-        # exist; kept at 0/0 here rather than guessing, per prompt §0's rule
-        # to preserve correctness over filling in a plausible-looking number.
-        compliance_done=0,
-        compliance_total=0,
+        compliance_done=compliance_done,
+        compliance_total=compliance_total,
     )
 
 
@@ -68,6 +67,13 @@ def _ir_total(db: Session, month_key: str) -> float:
 
     rows = db.query(IRMonthlyRevenue).filter(IRMonthlyRevenue.month_key == month_key).all()
     return sum(float(r.revenue) for r in rows)
+
+
+def _compliance_counts(db: Session, month_key: str) -> tuple[int, int]:
+    """§18.3: dashboard counts checklist *items* completed, not bonds."""
+    entries = db.query(ComplianceChecklistEntry).filter(ComplianceChecklistEntry.month_key == month_key).all()
+    done = sum(1 for e in entries if e.done)
+    return done, len(entries)
 
 
 def get_alerts(db: Session, today: date | None = None) -> list[Alert]:
@@ -104,5 +110,23 @@ def get_alerts(db: Session, today: date | None = None) -> list[Alert]:
             alerts.append(Alert(kind="d", category="portfolio", title="Vượt giới hạn 70% VCSH", detail=f"% Limit Used: {dash.usage_ratio*100:.2f}%"))
         elif dash.usage_ratio >= 0.9:
             alerts.append(Alert(kind="w", category="portfolio", title="Sắp chạm giới hạn 70% VCSH", detail=f"% Limit Used: {dash.usage_ratio*100:.2f}%"))
+
+    if dash.compliance_total > 0:
+        outstanding = dash.compliance_total - dash.compliance_done
+        if outstanding > 0:
+            alerts.append(
+                Alert(kind="w", category="compliance", title="Compliance chưa hoàn thành", detail=f"Còn {outstanding}/{dash.compliance_total} đầu việc tháng {cur_ym}")
+            )
+
+    from app.services.dates import current_week_key
+    from app.models.weekly import WeeklyPortfolioValue
+
+    cur_week = current_week_key(today)
+    has_bonds = db.query(Bond).filter(Bond.is_deleted.is_(False)).first() is not None
+    has_week_data = db.query(WeeklyPortfolioValue).filter(WeeklyPortfolioValue.week_key == cur_week).first() is not None
+    if has_bonds and not has_week_data and today.weekday() >= 4:  # Friday deadline (§21.2) has arrived
+        alerts.append(
+            Alert(kind="w", category="weekly", title="Tuần chưa cập nhật danh mục", detail=f"Chưa có dữ liệu khối lượng tuần {cur_week}")
+        )
 
     return alerts

@@ -17,8 +17,8 @@ build rather than a cut-down one. Current state:
 | 1 | Repo scaffold, DB schema (all entities), auth + RBAC, audit-log infra, optimistic locking, shell UI + navigation | **Done** |
 | 2 | Control tab (reference rates) + coupon engine + bond CRUD + monthly volume grid | **Done** |
 | 3 | Fee engine (6 fee types, time-varying rate schedules) + revenue | **Done** |
-| 4 | Dashboard aggregation + IR tab + Contracts register | **Done** (Compliance section is 0/0 placeholder until Phase 5) |
-| 5 | Weekly Portfolio + Compliance checklist + alerts | Not started |
+| 4 | Dashboard aggregation + IR tab + Contracts register | **Done** |
+| 5 | Weekly Portfolio + Compliance checklist + alerts | **Done** |
 | 6 | Audit log viewer, backup/export/import, duplicate detection, perf, full test suite, Docker polish | Not started |
 
 The **calculation engine itself** (coupon: fixed/floating/combined/conditional;
@@ -130,12 +130,27 @@ depth — see `app/services/concurrency.py` and the `StaleDataError` handler in
    nên có created_at, updated_at". `IRJob` and `ContractProject` similarly
    got a `version` column added (`1b44798ef647`) once it was clear renaming
    either is a genuine multi-user race, same reasoning as assumption 6.
-10. **Dashboard alerts (§18.6) are partial in this phase**: bond-maturing-
-    soon, benchmark-missing-current-month, and portfolio-near/over-limit are
-    live. Compliance-incomplete and weekly-not-updated alerts return nothing
-    today because those entities don't exist until Phase 5 — `get_alerts` in
-    `dashboard_service.py` will gain those two checks then, not before,
-    rather than faking a "0 outstanding" alert that isn't really true yet.
+10. **Dashboard alerts (§18.6)** are now complete: bond-maturing-soon,
+    benchmark-missing-current-month, portfolio-near/over-limit, compliance-
+    incomplete (current month, across all bonds), and weekly-not-updated
+    (fires once today has reached the Friday deadline and the current
+    calendar week has no `WeeklyPortfolioValue` row for any bond).
+11. **Weekly Portfolio grid is one bulk endpoint** (`GET /weekly?start=...&
+    end=...`), not one HTTP call per week column — `weekly_service.
+    get_week_range` computes every bond's coupon once per distinct month
+    (cached per request) and every week's accrual in a single pass, so the
+    frontend renders the whole multi-year week grid from one request instead
+    of the N+1 pattern a naive per-week-column fetch would produce (relevant
+    to §26's "tránh render/recalculate toàn app" performance guidance). The
+    per-week endpoints (`GET /weekly/{week_key}`, `PUT .../bonds/{bond_id}`)
+    still exist for single-cell writes and are what the grid's cell editor
+    calls on blur.
+12. **Coupon is shown as a small hint under each week's volume input**, not
+    as a separate grid row — the coupon in the reference prototype's own
+    weekly grid is one row shared across every bond, which doesn't hold once
+    bonds have different coupons; showing it per-cell, right where the
+    volume is entered, keeps "Hiển thị rõ Khối lượng và Coupon" (§21.4) true
+    without a misleading shared row.
 
 ## Local development
 

@@ -13,6 +13,7 @@ import IRPage from './pages/IRPage';
 import LoginPage from './pages/LoginPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import UsersPage from './pages/UsersPage';
+import WeeklyPage from './pages/WeeklyPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -38,7 +39,7 @@ export default function App() {
                 <Route path="control" element={<ControlPage />} />
                 <Route path="contracts" element={<ContractsPage />} />
                 <Route path="ir" element={<IRPage />} />
-                <Route path="weekly" element={<PlaceholderPage title="Theo dõi DM tuần" phase="Phase 5" />} />
+                <Route path="weekly" element={<WeeklyPage />} />
                 <Route path="bonds" element={<BondsListPage />} />
                 <Route path="bonds/:bondId" element={<BondDetailPage />} />
                 <Route path="audit" element={<PlaceholderPage title="Audit Log" phase="Phase 6" />} />
